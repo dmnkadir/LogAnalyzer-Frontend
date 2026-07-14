@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
 
 function Login() {
@@ -9,26 +9,25 @@ function Login() {
     const navigate = useNavigate();
 
     const handleLogin = async (e) => {
-        e.preventDefault(); // Sayfanın yenilenmesini engeller
-
+        e.preventDefault();
         try {
-            // Backend'e Axios ile POST isteği atıyoruz
             const response = await api.post('/auth/login', {
                 username: username,
                 password: password
             });
 
-            // Backend şifre yanlışsa "Hata:..." diye bir string dönüyordu hatırlarsan
-            if (response.data.startsWith('Hata')) {
-                setError(response.data);
-            } else {
-                // Şifre doğruysa gelen Token'ı tarayıcının hafızasına kaydet!
-                localStorage.setItem('token', response.data);
-                alert('Giriş Başarılı! Pasaport alındı.');
-                navigate('/dashboard'); // Başarılıysa Dashboard'a yönlendir
-            }
+            // Token direkt string gelmiyor, JSON objesinin içinde 'token' anahtarıyla geliyor.
+            localStorage.setItem('token', response.data.token);
+            alert('Giriş Başarılı! Pasaport alındı.');
+            navigate('/dashboard');
+
         } catch (err) {
-            setError('Sunucuya ulaşılamadı. Backend açık mı?');
+            // Backend 401 Hata kodu fırlattığı için Axios bunu otomatik olarak catch bloğuna düşürür.
+            if (err.response && err.response.data && err.response.data.error) {
+                setError(err.response.data.error); // Backend'den gelen "Şifre yanlış" mesajını bas
+            } else {
+                setError('Sunucuya ulaşılamadı. Backend açık mı?');
+            }
         }
     };
 
@@ -61,6 +60,10 @@ function Login() {
                 {error && <p style={{ color: 'red', margin: '10px 0' }}>{error}</p>}
 
                 <button type="submit" style={{ width: '100%', padding: '8px' }}>Giriş Yap</button>
+
+                <div style={{ marginTop: '15px', textAlign: 'center', fontSize: '14px' }}>
+                    Hesabın yok mu? <Link to="/register" style={{ color: '#007bff' }}>Kayıt Ol</Link>
+                </div>
             </form>
         </div>
     );

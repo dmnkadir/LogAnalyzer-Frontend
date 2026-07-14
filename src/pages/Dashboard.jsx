@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 // Recharts kütüphanesinden grafik bileşenlerini içeri alıyoruz
 import { PieChart, Pie, Cell, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
+import { useNavigate } from 'react-router-dom';
 
 function Dashboard() {
     const [file, setFile] = useState(null);
@@ -11,6 +12,37 @@ function Dashboard() {
     const [refreshTrigger, setRefreshTrigger] = useState(0);
     const [sessions, setSessions] = useState([]);
     const [selectedSessionId, setSelectedSessionId] = useState('');
+    const [sessionReport, setSessionReport] = useState('');
+    const [isReportLoading, setIsReportLoading] = useState(false);
+    const navigate = useNavigate();
+
+
+    const handleLogout = () => {
+        localStorage.removeItem('token'); // Token'ı sil
+        navigate('/login'); // Login sayfasına at
+    };
+
+    // Oturum değiştiğinde eski raporu temizle
+    useEffect(() => {
+        setSessionReport('');
+    }, [selectedSessionId]);
+
+    // Bütün oturumu analiz eden fonksiyon
+    const handleAnalyzeSession = async () => {
+        if (!selectedSessionId) return;
+
+        setIsReportLoading(true);
+        setSessionReport('');
+
+        try {
+            const response = await api.get(`/ai/analyze-session/${selectedSessionId}`);
+            setSessionReport(response.data);
+        } catch (error) {
+            setSessionReport("Rapor oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.");
+        } finally {
+            setIsReportLoading(false);
+        }
+    };
 
     useEffect(() => {
         fetchStats();
@@ -80,15 +112,23 @@ function Dashboard() {
     const chartData = stats ? [
         { name: 'INFO', value: stats.infoCount },
         { name: 'WARN', value: stats.warnCount },
-        { name: 'ERROR', value: stats.errorCount }
+        { name: 'ERROR', value: stats.errorCount },
+        { name: 'DEBUG', value: stats.debugCount }
     ] : [];
 
     // Seviyelere göre renk kodları (INFO: Yeşil, WARN: Turuncu, ERROR: Kırmızı)
-    const COLORS = ['#28a745', '#fd7e14', '#dc3545'];
+    const COLORS = ['#28a745', '#fd7e14', '#dc3545', '#0d6efd'];
 
     return (
         <div style={{ padding: '40px', maxWidth: '1000px', margin: '0 auto', fontFamily: 'Arial, sans-serif' }}>
-            <h2 style={{ borderBottom: '2px solid #eee', paddingBottom: '10px' }}>📊 Log Analyzer Paneli</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #eee', paddingBottom: '10px', marginBottom: '20px' }}>
+                <h2 style={{ margin: 0 }}> Log Analyzer Paneli</h2>
+                <button
+                    onClick={handleLogout}
+                    style={{ padding: '8px 16px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>
+                     Çıkış Yap
+                </button>
+            </div>
 
             {/* Üst Kısım: Dosya Yükleme Alanı */}
             <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: '#f8f9fa', borderRadius: '8px', border: '1px solid #dee2e6' }}>
@@ -146,6 +186,26 @@ function Dashboard() {
                     </div>
                 )}
             </div>
+
+            {selectedSessionId && stats && (stats.errorCount > 0 || stats.warnCount > 0) && (
+                <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: '#eef2ff', borderRadius: '8px', border: '1px solid #c7d2fe' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <h3 style={{ margin: 0, color: '#3730a3' }}> AI Incident Report (Olay Raporu)</h3>
+                        <button
+                            onClick={handleAnalyzeSession}
+                            disabled={isReportLoading}
+                            style={{ padding: '10px 20px', backgroundColor: '#4f46e5', color: 'white', border: 'none', borderRadius: '4px', cursor: isReportLoading ? 'not-allowed' : 'pointer', fontWeight: 'bold' }}>
+                            {isReportLoading ? 'Analiz Ediliyor...' : 'Tüm Oturumu Yapay Zeka İle Analiz Et'}
+                        </button>
+                    </div>
+
+                    {sessionReport && (
+                        <div style={{ marginTop: '20px', padding: '15px', backgroundColor: '#fff', borderRadius: '4px', border: '1px solid #e2e8f0', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
+                            {sessionReport}
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Alt Kısım: Grafikler */}
             {stats && stats.totalLogs > 0 && (

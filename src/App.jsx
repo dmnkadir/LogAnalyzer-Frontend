@@ -1,19 +1,29 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
-import Dashboard from './pages/Dashboard'; // Kendi yaptığımız Dashboard'u içeri aldık
+import Register from './pages/Register';
+import Dashboard from './pages/Dashboard';
+import ProtectedRoute from './components/ProtectedRoute'; // Güvenlik duvarımız
 
 function App() {
     return (
         <BrowserRouter>
             <Routes>
                 {/* Site açıldığında direkt login'e yönlendir */}
-                <Route path="/" element={<Navigate to="/login" />} />
+                <Route path="/" element={<Navigate to="/login" replace />} />
 
-                {/* Giriş Sayfası */}
+                {/* Herkese Açık Sayfalar */}
                 <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
 
-                {/* İŞTE GERÇEK DASHBOARD SAYFAMIZ */}
-                <Route path="/dashboard" element={<Dashboard />} />
+                {/* Sadece Giriş Yapanlara Açık Sayfalar */}
+                <Route
+                    path="/dashboard"
+                    element={
+                        <ProtectedRoute>
+                            <Dashboard />
+                        </ProtectedRoute>
+                    }
+                />
             </Routes>
         </BrowserRouter>
     );
