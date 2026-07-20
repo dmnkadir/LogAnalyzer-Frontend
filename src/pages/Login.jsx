@@ -17,14 +17,13 @@ function Login() {
             });
 
             // Token direkt string gelmiyor, JSON objesinin içinde 'token' anahtarıyla geliyor.
-            localStorage.setItem('token', response.data.token);
+            localStorage.setItem('token', response.data.data.token);
             alert('Giriş Başarılı! Pasaport alındı.');
             navigate('/dashboard');
 
         } catch (err) {
-            // Backend 401 Hata kodu fırlattığı için Axios bunu otomatik olarak catch bloğuna düşürür.
-            if (err.response && err.response.data && err.response.data.error) {
-                setError(err.response.data.error); // Backend'den gelen "Şifre yanlış" mesajını bas
+            if (err.response && err.response.data && err.response.data.message) {
+                setError(err.response.data.message);
             } else {
                 setError('Sunucuya ulaşılamadı. Backend açık mı?');
             }

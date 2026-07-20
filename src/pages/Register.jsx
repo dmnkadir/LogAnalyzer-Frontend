@@ -22,7 +22,7 @@ function Register() {
                 password: password
             });
 
-            setMessage(response.data); // "Harika! Kullanıcı başarıyla kaydedildi."
+            setMessage(response.data.message); // "Harika! Kullanıcı başarıyla kaydedildi."
             // 2 saniye bekle ve login sayfasına yönlendir
             setTimeout(() => {
                 navigate('/login');

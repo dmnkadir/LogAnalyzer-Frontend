@@ -1,33 +1,35 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react'; // Kullanılmayan 'React' importu kaldırıldı
 import api from '../services/api';
 
 function LogTable({ refreshTrigger, sessionId }) {
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    // AI Cevaplarını ekranda tutmak için WPF'teki DataContext mantığına benzeyen State'lerimiz
+    // AI Cevaplarını ekranda tutmak için State'lerimiz
     const [aiResponse, setAiResponse] = useState('');
     const [isAiLoading, setIsAiLoading] = useState(false);
 
     useEffect(() => {
+        // Fonksiyonu useEffect'in İÇİNE taşıdık.
+        // Böylece "tanımlanmadan önce kullanıldı" hatası ve bağımlılık uyarısı çözüldü.
+        const fetchLogs = async () => {
+            setLoading(true);
+            try {
+                const response = await api.get(`/logs/session/${sessionId}`);
+                setLogs(response.data.data);
+            } catch (err) { // Kullanılmayan 'error' değişkeni 'err' yapılıp console'a bağlandı
+                console.error("Loglar çekilemedi", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
         if (sessionId) {
             fetchLogs();
         } else {
             setLogs([]);
         }
     }, [refreshTrigger, sessionId]);
-
-    const fetchLogs = async () => {
-        setLoading(true);
-        try {
-            const response = await api.get(`/logs/session/${sessionId}`);
-            setLogs(response.data);
-        } catch (error) {
-            console.error("Loglar çekilemedi", error);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     // BUTONA TIKLANINCA ÇALIŞACAK FONKSİYON (Tekli Log İncelemesi)
     const handleAskAI = async (logMessage) => {
@@ -51,8 +53,9 @@ Lütfen cevabını aşağıdaki formatı BİREBİR kopyalayarak ver:
 İncelenecek Log: "${logMessage}"`;
 
             const response = await api.get(`/ai/test?soru=${encodeURIComponent(prompt)}`);
-            setAiResponse(response.data);
-        } catch (error) {
+            setAiResponse(response.data.data);
+        } catch (err) { // Kullanılmayan 'error' değişkeni 'err' yapılıp console'a bağlandı
+            console.error("Yapay zeka hatası:", err);
             setAiResponse("Yapay zekaya ulaşılamadı. Backend açık mı?");
         } finally {
             setIsAiLoading(false);
@@ -80,7 +83,6 @@ Lütfen cevabını aşağıdaki formatı BİREBİR kopyalayarak ver:
                     {isAiLoading ? (
                         <p style={{ margin: 0, fontStyle: 'italic', color: '#666' }}>Yapay zeka (Llama 3.3) hatayı inceliyor, lütfen bekleyin...</p>
                     ) : (
-                        // DİKKAT: whiteSpace: 'pre-wrap' burada eklendi!
                         <p style={{ margin: 0, lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>{aiResponse}</p>
                     )}
                 </div>
@@ -99,18 +101,18 @@ Lütfen cevabını aşağıdaki formatı BİREBİR kopyalayarak ver:
                     <tbody>
                     {logs.map((log) => (
                         <tr key={log.id} style={{ borderBottom: '1px solid #eee' }}>
-                            <td style={{ padding: '10px' }}>{log.timestamp}</td>
+                            <td style={{ padding: '10px' }}>{log.createdAt}</td>
                             <td style={{
                                 padding: '10px',
                                 fontWeight: 'bold',
-                                color: log.level === 'ERROR' ? '#dc3545' : (log.level === 'WARN' ? '#fd7e14' : '#28a745')
+                                color: log.logLevel === 'ERROR' ? '#dc3545' : (log.logLevel === 'WARN' ? '#fd7e14' : '#28a745')
                             }}>
-                                {log.level}
+                                {log.logLevel}
                             </td>
                             <td style={{ padding: '10px' }}>{log.message}</td>
                             <td style={{ padding: '10px' }}>
                                 {/* SADECE ERROR SEVİYESİNDEKİ LOGLAR İÇİN BUTON GÖSTERİYORUZ */}
-                                {(log.level === 'ERROR' || (log.message && log.message.includes('ERROR'))) && (
+                                {(log.logLevel === 'ERROR' || (log.message && log.message.includes('ERROR'))) && (
                                     <button
                                         onClick={() => handleAskAI(log.message)}
                                         style={{ padding: '6px 12px', backgroundColor: '#6f42c1', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>

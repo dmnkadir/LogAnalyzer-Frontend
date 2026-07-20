@@ -36,7 +36,7 @@ function Dashboard() {
 
         try {
             const response = await api.get(`/ai/analyze-session/${selectedSessionId}`);
-            setSessionReport(response.data);
+            setSessionReport(response.data.data);
         } catch (error) {
             setSessionReport("Rapor oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.");
         } finally {
@@ -71,19 +71,19 @@ function Dashboard() {
 
         try {
             const response = await api.post('/logs/upload', formData);
-            setMessage(response.data);
-            fetchStats(); // Dosya yüklendikten sonra grafikleri otomatik güncelle
-            fetchSessions(); // Oturum listesini de güncelle
+            setMessage(response.data.message);
+            fetchStats();
+            fetchSessions();
             setRefreshTrigger(prev => prev + 1);
         } catch (error) {
-            setMessage("Hata: " + (error.response?.data || "Dosya yüklenemedi"));
+            setMessage("Hata: " + (error.response?.data?.message || "Dosya yüklenemedi"));
         }
     };
 
     const fetchStats = async () => {
         try {
             const response = await api.get('/logs/stats');
-            setStats(response.data);
+            setStats(response.data.data);
         } catch (error) {
             console.error("İstatistikler alınamadı", error);
             setStats(null);
@@ -96,8 +96,8 @@ function Dashboard() {
             console.log("--- DİKKAT: Backend'den Gelen Veri ---");
             console.log(response.data);
 
-            if (Array.isArray(response.data)) {
-                setSessions(response.data);
+            if (response.data && Array.isArray(response.data.data)) {
+                setSessions(response.data.data);
             } else {
                 console.error("Hata: Backend'den dizi gelmedi!", response.data);
                 setSessions([]);
