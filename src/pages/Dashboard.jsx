@@ -187,7 +187,7 @@ function Dashboard() {
                 )}
             </div>
 
-            {selectedSessionId && stats && (stats.errorCount > 0 || stats.warnCount > 0) && (
+            {selectedSessionId && (
                 <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: '#eef2ff', borderRadius: '8px', border: '1px solid #c7d2fe' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <h3 style={{ margin: 0, color: '#3730a3' }}> AI Incident Report (Olay Raporu)</h3>
