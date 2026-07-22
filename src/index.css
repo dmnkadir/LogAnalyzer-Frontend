@@ -1,0 +1,76 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+    /* DARK TEMA */
+
+    /* Arka Planlar */
+    --bg-main: #1e1f22;      /* En arka plan  */
+    --bg-card: #2b2d31;      /* Kartlar ve tablolar  */
+    --bg-input: #111214;     /* Input, Select ve AI kutuları (Neredeyse siyah) */
+
+    /* Yazı Renkleri */
+    --text-main: #f2f3f5;    /* Kırık beyaz (Başlıklar için) */
+    --text-muted: #dbdee1;   /* Normal yazılar için */
+    --text-dark: #8e9297;
+
+    /* Çizgiler */
+    --border-color: #1e1f22;
+
+    /* Log Renkleri */
+    --color-info: #23a559;
+    --color-warn: #f0b232;
+    --color-error: #da373c;
+
+    /* Aksiyon Butonları */
+    --btn-primary: #5865F2;
+    --btn-danger: #ed4245;
+    --btn-success: #3ba55c;
+}
+
+
+   /* LIGHT TEMA  */
+
+[data-theme="light"] {
+    /* Arka Planlar */
+    --bg-main: #ebedef;      /* En arka plan (Hafif kırık gri/beyaz) */
+    --bg-card: #ffffff;      /* Kartlar ve tablolar (Tam beyaz) */
+    --bg-input: #f2f3f5;     /* Input, Select ve AI kutuları (Çok uçuk gri) */
+
+    /* Yazı Renkleri */
+    --text-main: #060607;    /* Tam siyah (Başlıklar için) */
+    --text-muted: #4e5058;   /* Koyu Gri (Normal okuma yazıları için) */
+    --text-dark: #80848e;    /* Pasif yazılar için */
+
+    /* Çizgiler */
+    --border-color: #d4d7dc; /* Kartları birbirinden ayıran net ama yumuşak gri */
+
+    /* Log Renkleri (Beyaz arka planda daha iyi okunması için bir tık koyulaştırıldı) */
+    --color-info: #1b873f;
+    --color-warn: #b27b16;
+    --color-error: #da373c;
+}
+
+/* Genel Sayfa Ayarları */
+body {
+    background-color: var(--bg-main);
+    color: var(--text-muted);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    margin: 0;
+    padding: 0;
+    /* Tema değişirken yumuşak bir geçiş efekti verir */
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* RESPONSIVE (MOBİL & TABLET) KURALLARI */
+
+@media (max-width: 768px) {
+    /* Küçük ekranlarda sidebar'ı tamamen gizle veya mobilleştir */
+    .app-sidebar {
+        display: none !important;
+    }
+
+    /* Ana içerik alanını tam genişlik yap */
+    .app-main-container {
+        width: 100% !important;
+    }
+}

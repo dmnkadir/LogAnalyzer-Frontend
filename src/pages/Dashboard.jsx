@@ -14,13 +14,7 @@ function Dashboard() {
     const [selectedSessionId, setSelectedSessionId] = useState('');
     const [sessionReport, setSessionReport] = useState('');
     const [isReportLoading, setIsReportLoading] = useState(false);
-    const navigate = useNavigate();
 
-
-    const handleLogout = () => {
-        localStorage.removeItem('token'); // Token'ı sil
-        navigate('/login'); // Login sayfasına at
-    };
 
     // Oturum değiştiğinde eski raporu temizle
     useEffect(() => {
@@ -120,37 +114,29 @@ function Dashboard() {
     const COLORS = ['#28a745', '#fd7e14', '#dc3545', '#0d6efd'];
 
     return (
-        <div style={{ padding: '40px', maxWidth: '1000px', margin: '0 auto', fontFamily: 'Arial, sans-serif' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #eee', paddingBottom: '10px', marginBottom: '20px' }}>
-                <h2 style={{ margin: 0 }}> Log Analyzer Paneli</h2>
-                <button
-                    onClick={handleLogout}
-                    style={{ padding: '8px 16px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>
-                     Çıkış Yap
-                </button>
-            </div>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', color: 'var(--text-main)' }}>
 
             {/* Üst Kısım: Dosya Yükleme Alanı */}
-            <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: '#f8f9fa', borderRadius: '8px', border: '1px solid #dee2e6' }}>
-                <h4 style={{ marginTop: 0 }}>Yeni Log Dosyası Yükle</h4>
+            <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'var(--bg-card)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                <h4 style={{ marginTop: 0, color: 'var(--text-main)' }}>Yeni Log Dosyası Yükle</h4>
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                    <input type="file" onChange={handleFileChange} />
+                    <input type="file" onChange={handleFileChange} style={{ color: 'var(--text-muted)' }} />
                     <button
                         onClick={handleUpload}
-                        style={{ padding: '8px 20px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+                        style={{ padding: '8px 20px', backgroundColor: 'var(--btn-primary)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
                         Yükle ve Analiz Et
                     </button>
                 </div>
-                {message && <p style={{ marginTop: '10px', color: '#0056b3', fontWeight: 'bold' }}>{message}</p>}
+                {message && <p style={{ marginTop: '10px', color: 'var(--color-info)', fontWeight: 'bold' }}>{message}</p>}
             </div>
 
             {/* Oturum Seçimi Alanı */}
-            <div style={{ marginBottom: '20px', padding: '20px', backgroundColor: '#f8f9fa', borderRadius: '8px', border: '1px solid #dee2e6' }}>
-                <h4 style={{ marginTop: 0 }}>Analiz Edilecek Oturumu Seçin</h4>
-                <select 
-                    value={selectedSessionId} 
+            <div style={{ marginBottom: '20px', padding: '20px', backgroundColor: 'var(--bg-card)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                <h4 style={{ marginTop: 0, color: 'var(--text-main)' }}>Analiz Edilecek Oturumu Seçin</h4>
+                <select
+                    value={selectedSessionId}
                     onChange={(e) => setSelectedSessionId(e.target.value)}
-                    style={{ padding: '10px', width: '100%', borderRadius: '4px', border: '1px solid #ccc', fontSize: '16px' }}
+                    style={{ padding: '10px', width: '100%', borderRadius: '4px', border: '1px solid var(--border-color)', fontSize: '16px', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)' }}
                 >
                     <option value="">-- Bir Oturum Seçin --</option>
                     {sessions && sessions.length > 0 ? (
@@ -169,38 +155,38 @@ function Dashboard() {
             <div style={{ marginBottom: '20px' }}>
                 <button
                     onClick={() => { fetchStats(); fetchSessions(); }}
-                    style={{ padding: '10px 20px', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', marginBottom: '20px' }}>
+                    style={{ padding: '10px 20px', backgroundColor: 'var(--btn-success)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', marginBottom: '20px' }}>
                     Verileri / Grafikleri Yenile
                 </button>
 
                 {stats && (
                     <div style={{ display: 'flex', gap: '20px', marginBottom: '30px' }}>
-                        <div style={{ flex: 1, padding: '20px', backgroundColor: '#fff', border: '1px solid #ddd', borderRadius: '8px', textAlign: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-                            <h3 style={{ margin: 0, color: '#6c757d' }}>Toplam Log</h3>
-                            <h1 style={{ margin: '10px 0 0 0', fontSize: '36px' }}>{stats.totalLogs}</h1>
+                        <div style={{ flex: 1, padding: '20px', backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '8px', textAlign: 'center' }}>
+                            <h3 style={{ margin: 0, color: 'var(--text-muted)' }}>Toplam Log</h3>
+                            <h1 style={{ margin: '10px 0 0 0', fontSize: '36px', color: 'var(--text-main)' }}>{stats.totalLogs}</h1>
                         </div>
-                        <div style={{ flex: 1, padding: '20px', backgroundColor: '#fff', border: '1px solid #ddd', borderRadius: '8px', textAlign: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-                            <h3 style={{ margin: 0, color: '#dc3545' }}>Kritik Hata (ERROR)</h3>
-                            <h1 style={{ margin: '10px 0 0 0', fontSize: '36px', color: '#dc3545' }}>{stats.errorCount}</h1>
+                        <div style={{ flex: 1, padding: '20px', backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '8px', textAlign: 'center' }}>
+                            <h3 style={{ margin: 0, color: 'var(--color-error)' }}>Kritik Hata (ERROR)</h3>
+                            <h1 style={{ margin: '10px 0 0 0', fontSize: '36px', color: 'var(--color-error)' }}>{stats.errorCount}</h1>
                         </div>
                     </div>
                 )}
             </div>
 
             {selectedSessionId && (
-                <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: '#eef2ff', borderRadius: '8px', border: '1px solid #c7d2fe' }}>
+                <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: 'var(--bg-card)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <h3 style={{ margin: 0, color: '#3730a3' }}> AI Incident Report (Olay Raporu)</h3>
+                        <h3 style={{ margin: 0, color: 'var(--text-main)' }}> AI Incident Report (Olay Raporu)</h3>
                         <button
                             onClick={handleAnalyzeSession}
                             disabled={isReportLoading}
-                            style={{ padding: '10px 20px', backgroundColor: '#4f46e5', color: 'white', border: 'none', borderRadius: '4px', cursor: isReportLoading ? 'not-allowed' : 'pointer', fontWeight: 'bold' }}>
+                            style={{ padding: '10px 20px', backgroundColor: 'var(--btn-primary)', color: 'white', border: 'none', borderRadius: '4px', cursor: isReportLoading ? 'not-allowed' : 'pointer', fontWeight: 'bold' }}>
                             {isReportLoading ? 'Analiz Ediliyor...' : 'Tüm Oturumu Yapay Zeka İle Analiz Et'}
                         </button>
                     </div>
 
                     {sessionReport && (
-                        <div style={{ marginTop: '20px', padding: '15px', backgroundColor: '#fff', borderRadius: '4px', border: '1px solid #e2e8f0', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
+                        <div style={{ marginTop: '20px', padding: '15px', backgroundColor: 'var(--bg-main)', color: 'var(--text-muted)', borderRadius: '4px', border: '1px solid var(--border-color)', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
                             {sessionReport}
                         </div>
                     )}
@@ -211,30 +197,30 @@ function Dashboard() {
             {stats && stats.totalLogs > 0 && (
                 <div style={{ display: 'flex', gap: '30px', height: '300px' }}>
                     {/* Pasta Grafik */}
-                    <div style={{ flex: 1, backgroundColor: '#fff', border: '1px solid #ddd', borderRadius: '8px', padding: '20px' }}>
-                        <h4 style={{ textAlign: 'center', marginTop: 0 }}>Log Dağılımı</h4>
+                    <div style={{ flex: 1, backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '20px' }}>
+                        <h4 style={{ textAlign: 'center', marginTop: 0, color: 'var(--text-main)' }}>Log Dağılımı</h4>
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
-                                <Pie data={chartData} cx="50%" cy="50%" outerRadius={80} dataKey="value" label>
+                                <Pie data={chartData} cx="50%" cy="50%" outerRadius={80} dataKey="value" label={{ fill: 'var(--text-muted)' }}>
                                     {chartData.map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                     ))}
                                 </Pie>
-                                <Tooltip />
-                                <Legend />
+                                <Tooltip contentStyle={{ backgroundColor: 'var(--bg-input)', borderColor: 'var(--border-color)', color: 'var(--text-main)' }} />
+                                <Legend wrapperStyle={{ color: 'var(--text-muted)' }} />
                             </PieChart>
                         </ResponsiveContainer>
                     </div>
 
                     {/* Çubuk Grafik */}
-                    <div style={{ flex: 1, backgroundColor: '#fff', border: '1px solid #ddd', borderRadius: '8px', padding: '20px' }}>
-                        <h4 style={{ textAlign: 'center', marginTop: 0 }}>Seviye Bazlı Karşılaştırma</h4>
+                    <div style={{ flex: 1, backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '20px' }}>
+                        <h4 style={{ textAlign: 'center', marginTop: 0, color: 'var(--text-main)' }}>Seviye Bazlı Karşılaştırma</h4>
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={chartData}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="name" />
-                                <YAxis />
-                                <Tooltip />
+                                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+                                <XAxis dataKey="name" stroke="var(--text-muted)" />
+                                <YAxis stroke="var(--text-muted)" />
+                                <Tooltip contentStyle={{ backgroundColor: 'var(--bg-input)', borderColor: 'var(--border-color)', color: 'var(--text-main)' }} />
                                 <Bar dataKey="value">
                                     {chartData.map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
