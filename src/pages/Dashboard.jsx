@@ -4,7 +4,7 @@ import LogTable from '../components/LogTable';
 import StatsCard from '../components/dashboard/StatsCard';
 import LogDistributionChart from '../components/dashboard/LogDistributionChart';
 import SessionSelector from '../components/dashboard/SessionSelector';
-import ExceptionSummary from '../components/dashboard/ExceptionSummary'; // <-- 1. BİLEŞENİ İÇERİ ALDIK
+import ExceptionSummary from '../components/dashboard/ExceptionSummary';
 
 function Dashboard() {
     const [file, setFile] = useState(null);
@@ -16,7 +16,6 @@ function Dashboard() {
         warnCount: 0,
         infoCount: 0,
         debugCount: 0,
-        // <-- 2. STATE'E YENİ DEĞERLER İÇİN YER AÇTIK
         mostFrequentException: null,
         mostErrorProneClass: null,
         firstErrorTime: null,
@@ -78,7 +77,6 @@ function Dashboard() {
         try {
             const response = await api.get('/logs/stats');
             if (response.data && response.data.data) {
-                // <-- 3. BACKEND'DEN GELEN YENİ VERİLERİ STATE'E EŞLEDİK
                 setStats({
                     totalLogs: response.data.data.totalLogs || 0,
                     errorCount: response.data.data.errorCount || 0,
@@ -132,18 +130,19 @@ function Dashboard() {
                 onRefresh={() => { fetchStats(); fetchSessions(); }}
             />
 
+            {/* İSTATİSTİK KARTLARI (DEBUG EKLENDİ, INFO İKONU DÜZELTİLDİ) */}
             <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
                 gap: '20px'
             }}>
                 <StatsCard title="Toplam Log" value={stats.totalLogs} icon={<span>📊</span>} colorVar="--btn-primary" delay={0.1} />
                 <StatsCard title="Kritik (ERROR)" value={stats.errorCount} icon={<span>🔴</span>} colorVar="--color-error" delay={0.2} />
                 <StatsCard title="Uyarı (WARN)" value={stats.warnCount} icon={<span>🟠</span>} colorVar="--color-warn" delay={0.3} />
-                <StatsCard title="Bilgi (INFO)" value={stats.infoCount} icon={<span>🔵</span>} colorVar="--color-info" delay={0.4} />
+                <StatsCard title="Bilgi (INFO)" value={stats.infoCount} icon={<span>🟢</span>} colorVar="--color-info" delay={0.4} />
+                <StatsCard title="Ayıklama (DEBUG)" value={stats.debugCount} icon={<span>🔵</span>} colorVar="--btn-primary" delay={0.5} />
             </div>
 
-            {/* <-- 4. İŞTE YENİ BİLEŞENİMİZ BURADA! (Kartların hemen altında) --> */}
             <ExceptionSummary stats={stats} />
 
             {selectedSessionId && (

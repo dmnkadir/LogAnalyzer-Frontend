@@ -1,20 +1,35 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
+import LogFilter from './logs/LogFilter';
+import LogSearch from './logs/LogSearch';
 
 function LogTable({ refreshTrigger, sessionId }) {
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    // AI Cevaplarını ekranda tutmak için State'lerimiz
     const [aiResponse, setAiResponse] = useState('');
     const [isAiLoading, setIsAiLoading] = useState(false);
 
-    // Arama ve Filtreleme State'leri
     const [keyword, setKeyword] = useState('');
     const [levelFilter, setLevelFilter] = useState('');
 
+    const [currentPage, setCurrentPage] = useState(1);
+    const logsPerPage = 15;
+
+    // Arama veya filtre değiştiğinde sayfayı 1'e sıfırla
     useEffect(() => {
-        const fetchLogs = async () => {
+        setCurrentPage(1);
+    }, [keyword, levelFilter]);
+
+    // GİZLİ VE PROFESYONEL DEBOUNCE (0.5 Saniye)
+    useEffect(() => {
+        if (!sessionId) {
+            setLogs([]);
+            return;
+        }
+
+        // Arka planda 500ms bekler, ekrana hiçbir bekleme mesajı yansıtmaz
+        const timerId = setTimeout(async () => {
             setLoading(true);
             try {
                 const params = new URLSearchParams();
@@ -22,46 +37,30 @@ function LogTable({ refreshTrigger, sessionId }) {
                 if (levelFilter) params.append('level', levelFilter);
 
                 const response = await api.get(`/logs/session/${sessionId}?${params.toString()}`);
-                setLogs(response.data.data);
+                setLogs(response.data.data || []);
             } catch (err) {
                 console.error("Loglar çekilemedi", err);
             } finally {
                 setLoading(false);
             }
-        };
+        }, 500);
 
-        if (sessionId) {
-            // Sarı uyarıyı çözen kısım: .catch() ekledik
-            const timeoutId = setTimeout(() => {
-                fetchLogs().catch(err => console.error(err));
-            }, 500);
-            return () => clearTimeout(timeoutId);
-        } else {
-            // Kırmızı hatayı çözen kısım: Senkron state güncellemesini asenkron kuyruğa (microtask) attık
-            Promise.resolve().then(() => setLogs([]));
-        }
-    }, [refreshTrigger, sessionId, keyword, levelFilter]); // State'ler değiştiğinde useEffect tetiklenecek
+        return () => clearTimeout(timerId);
 
-    // BUTONA TIKLANINCA ÇALIŞACAK FONKSİYON (Tekli Log İncelemesi) - HİÇ DOKUNULMADI
+    }, [refreshTrigger, sessionId, keyword, levelFilter]);
+
+    // Sayfalama Hesaplamaları
+    const indexOfLastLog = currentPage * logsPerPage;
+    const indexOfFirstLog = indexOfLastLog - logsPerPage;
+    const currentLogs = logs.slice(indexOfFirstLog, indexOfLastLog);
+    const totalPages = Math.ceil(logs.length / logsPerPage);
+
     const handleAskAI = async (logMessage) => {
         setIsAiLoading(true);
         setAiResponse('');
 
         try {
-            const prompt = `Aşağıdaki tek satırlık log mesajını incele ve açıkla.
-Yanıtın TÜRKÇE olmalıdır. (Yazılım terimlerini orijinal İngilizce halleriyle bırakabilirsin, örneğin: initialize, referans, null vs.). Kesinlikle SADECE Latin alfabesi kullan!
-
-Lütfen cevabını aşağıdaki formatı BİREBİR kopyalayarak ver:
-
-**Kök Neden:**
-[Kısa ve net Türkçe teknik açıklama]
-
-**Çözüm Önerisi:**
-- [Adım 1]
-- [Adım 2]
-
-İncelenecek Log: "${logMessage}"`;
-
+            const prompt = `Aşağıdaki tek satırlık log mesajını incele ve açıkla. Yanıtın TÜRKÇE olmalıdır. Lütfen cevabını aşağıdaki formatı BİREBİR kopyalayarak ver:\n\n**Kök Neden:**\n[Kısa açıklama]\n\n**Çözüm Önerisi:**\n- [Adım 1]\n\nİncelenecek Log: "${logMessage}"`;
             const response = await api.get(`/ai/test?soru=${encodeURIComponent(prompt)}`);
             setAiResponse(response.data.data);
         } catch (err) {
@@ -72,88 +71,132 @@ Lütfen cevabını aşağıdaki formatı BİREBİR kopyalayarak ver:
         }
     };
 
+    const getHighlightedText = (text, highlight) => {
+        if (!highlight.trim()) {
+            return <span>{text}</span>;
+        }
+        const parts = text.split(new RegExp(`(${highlight})`, 'gi'));
+        return <span>
+            {parts.map((part, i) =>
+                part.toLowerCase() === highlight.toLowerCase() ?
+                    <span key={i} style={{ backgroundColor: '#fef08a', color: '#854d0e', padding: '0 2px', borderRadius: '2px', fontWeight: 'bold' }}>{part}</span> : part
+            )}
+        </span>;
+    };
+
     if (!sessionId) {
         return (
-            <div style={{ marginTop: '40px', backgroundColor: 'var(--bg-card)', padding: '20px', borderRadius: '8px', border: '1px solid var(--border-color)', textAlign: 'center' }}>
-                <p style={{ fontSize: '16px', color: 'var(--text-muted)' }}>Lütfen logları görüntülemek için yukarıdan bir oturum seçin.</p>
+            <div style={{ marginTop: '40px', backgroundColor: 'var(--bg-card)', padding: '40px 20px', borderRadius: '8px', border: '1px solid var(--border-color)', textAlign: 'center' }}>
+                <span style={{ fontSize: '32px', display: 'block', marginBottom: '10px' }}>📂</span>
+                <p style={{ fontSize: '16px', color: 'var(--text-muted)', margin: 0 }}>Lütfen logları görüntülemek için yukarıdan bir oturum seçin.</p>
             </div>
         );
     }
 
     return (
-        <div style={{ marginTop: '40px', backgroundColor: 'var(--bg-card)', padding: '20px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+        <div style={{ marginTop: '40px', backgroundColor: 'var(--bg-card)', padding: '20px', borderRadius: '8px', border: '1px solid var(--border-color)', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
 
-            {/* Arama ve Filtreleme Arayüzü */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '15px', marginBottom: '15px' }}>
-                <h3 style={{ margin: 0, color: 'var(--text-main)' }}> Detaylı Log Listesi</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', borderBottom: '1px solid var(--border-color)', paddingBottom: '20px', marginBottom: '20px' }}>
+                <h3 style={{ margin: 0, color: 'var(--text-main)', fontSize: '18px' }}>📑 Detaylı Log Listesi</h3>
 
-                <div style={{ display: 'flex', gap: '15px' }}>
-                    <input
-                        type="text"
-                        placeholder="Mesajlarda ara (Örn: NullPointer)"
-                        value={keyword}
-                        onChange={(e) => setKeyword(e.target.value)}
-                        style={{ padding: '8px', borderRadius: '4px', border: '1px solid var(--border-color)', width: '250px', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)' }}
-                    />
-
-                    <select
-                        value={levelFilter}
-                        onChange={(e) => setLevelFilter(e.target.value)}
-                        style={{ padding: '8px', borderRadius: '4px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)' }}
-                    >
-                        <option value="">Tüm Seviyeler</option>
-                        <option value="ERROR">ERROR</option>
-                        <option value="WARN">WARN</option>
-                        <option value="INFO">INFO</option>
-                        <option value="DEBUG">DEBUG</option>
-                    </select>
+                <div style={{ display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <LogSearch keyword={keyword} onSearchChange={setKeyword} />
+                    <LogFilter currentFilter={levelFilter} onFilterChange={setLevelFilter} />
                 </div>
             </div>
 
-            {/* YAPAY ZEKA CEVAP KUTUSU */}
             {(isAiLoading || aiResponse) && (
-                <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-color)', borderRadius: '8px' }}>
-                    <h4 style={{ margin: '0 0 10px 0', color: 'var(--text-main)' }}> Yapay Zeka Analizi</h4>
+                <div style={{ marginBottom: '20px', padding: '20px', backgroundColor: 'var(--bg-input)', borderLeft: '4px solid var(--btn-primary)', borderRadius: '0 8px 8px 0' }}>
+                    <h4 style={{ margin: '0 0 10px 0', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span>🤖</span> Yapay Zeka Analizi
+                    </h4>
                     {isAiLoading ? (
-                        <p style={{ margin: 0, fontStyle: 'italic', color: 'var(--text-muted)' }}>Yapay zeka hatayı inceliyor, lütfen bekleyin...</p>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-muted)' }}>
+                            <div className="spinner" style={{ width: '16px', height: '16px', border: '2px solid var(--text-dark)', borderTopColor: 'var(--btn-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+                            <span style={{ fontStyle: 'italic' }}>Yapay zeka hatayı inceliyor...</span>
+                        </div>
                     ) : (
                         <p style={{ margin: 0, lineHeight: '1.6', whiteSpace: 'pre-wrap', color: 'var(--text-muted)' }}>{aiResponse}</p>
                     )}
+                    <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
                 </div>
             )}
 
             {loading ? (
-                <p style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>Yükleniyor...</p>
+                <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-muted)' }}>
+                    <div style={{
+                        display: 'inline-block',
+                        width: '32px',
+                        height: '32px',
+                        border: '3px solid var(--border-color)',
+                        borderTopColor: 'var(--btn-primary)',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite'
+                    }}></div>
+                    <div style={{ marginTop: '15px', fontWeight: '500' }}>
+                        Loglar getiriliyor...
+                    </div>
+                </div>
             ) : (
                 <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px', color: 'var(--text-muted)' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
                         <thead>
-                        <tr style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-main)' }}>
-                            <th style={{ padding: '12px', borderBottom: '2px solid var(--border-color)' }}>Tarih</th>
-                            <th style={{ padding: '12px', borderBottom: '2px solid var(--border-color)' }}>Seviye</th>
-                            <th style={{ padding: '12px', borderBottom: '2px solid var(--border-color)' }}>Mesaj</th>
-                            <th style={{ padding: '12px', borderBottom: '2px solid var(--border-color)' }}>Aksiyon</th>
+                        <tr style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-muted)', borderBottom: '2px solid var(--border-color)' }}>
+                            <th style={{ padding: '15px 10px', fontWeight: '600' }}>Tarih</th>
+                            <th style={{ padding: '15px 10px', fontWeight: '600' }}>Seviye</th>
+                            <th style={{ padding: '15px 10px', fontWeight: '600', width: '60%' }}>Mesaj</th>
+                            <th style={{ padding: '15px 10px', fontWeight: '600', textAlign: 'right' }}>Aksiyon</th>
                         </tr>
                         </thead>
                         <tbody>
-                        {logs.map((log) => (
-                            <tr key={log.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                                <td style={{ padding: '10px' }}>{log.createdAt}</td>
-                                <td style={{
-                                    padding: '10px',
-                                    fontWeight: 'bold',
-                                    color: log.logLevel === 'ERROR' ? 'var(--color-error)' : (log.logLevel === 'WARN' ? 'var(--color-warn)' : 'var(--color-info)')
-                                }}>
-                                    {log.logLevel}
+                        {currentLogs.map((log, index) => (
+                            <tr key={log.id}
+                                style={{
+                                    borderBottom: '1px solid var(--border-color)',
+                                    backgroundColor: index % 2 === 0 ? 'transparent' : 'var(--bg-main)',
+                                    transition: 'background-color 0.2s ease'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-input)'}
+                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = index % 2 === 0 ? 'transparent' : 'var(--bg-main)'}
+                            >
+                                <td style={{ padding: '12px 10px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                                    {log.createdAt || '-'}
                                 </td>
-                                <td style={{ padding: '10px' }}>{log.message}</td>
-                                <td style={{ padding: '10px' }}>
-                                    {/* SADECE ERROR SEVİYESİNDEKİ LOGLAR İÇİN BUTON GÖSTERİYORUZ */}
+                                <td style={{ padding: '12px 10px' }}>
+                                    <span style={{
+                                        padding: '4px 8px',
+                                        borderRadius: '4px',
+                                        fontSize: '11px',
+                                        fontWeight: 'bold',
+                                        backgroundColor: log.logLevel === 'ERROR' ? 'rgba(218, 55, 60, 0.1)' : (log.logLevel === 'WARN' ? 'rgba(240, 178, 50, 0.1)' : 'rgba(35, 165, 89, 0.1)'),
+                                        color: log.logLevel === 'ERROR' ? 'var(--color-error)' : (log.logLevel === 'WARN' ? 'var(--color-warn)' : 'var(--color-info)'),
+                                        border: `1px solid ${log.logLevel === 'ERROR' ? 'var(--color-error)' : (log.logLevel === 'WARN' ? 'var(--color-warn)' : 'var(--color-info)')}`
+                                    }}>
+                                        {log.logLevel}
+                                    </span>
+                                </td>
+                                <td style={{ padding: '12px 10px', color: 'var(--text-main)', fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                                    {getHighlightedText(log.message, keyword)}
+                                </td>
+                                <td style={{ padding: '12px 10px', textAlign: 'right' }}>
                                     {(log.logLevel === 'ERROR' || (log.message && log.message.includes('ERROR'))) && (
                                         <button
                                             onClick={() => handleAskAI(log.message)}
-                                            style={{ padding: '6px 12px', backgroundColor: 'var(--btn-primary)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>
-                                            AI Açıkla
+                                            style={{
+                                                padding: '6px 12px',
+                                                backgroundColor: 'transparent',
+                                                color: 'var(--btn-primary)',
+                                                border: '1px solid var(--btn-primary)',
+                                                borderRadius: '4px',
+                                                cursor: 'pointer',
+                                                fontWeight: 'bold',
+                                                fontSize: '12px',
+                                                transition: 'all 0.2s ease'
+                                            }}
+                                            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--btn-primary)'; e.currentTarget.style.color = 'white'; }}
+                                            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--btn-primary)'; }}
+                                        >
+                                            🤖 AI Açıkla
                                         </button>
                                     )}
                                 </td>
@@ -161,7 +204,40 @@ Lütfen cevabını aşağıdaki formatı BİREBİR kopyalayarak ver:
                         ))}
                         </tbody>
                     </table>
-                    {logs.length === 0 && <p style={{ textAlign: 'center', marginTop: '20px', color: 'var(--text-muted)' }}>Sistemde henüz log bulunmuyor veya aramaya uygun sonuç yok.</p>}
+
+                    {logs.length === 0 && (
+                        <div style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)' }}>
+                            Bu kriterlere uygun log bulunamadı.
+                        </div>
+                    )}
+
+                    {totalPages > 1 && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 10px 0 10px', marginTop: '10px', borderTop: '1px solid var(--border-color)' }}>
+                            <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+                                Toplam <b>{logs.length}</b> sonuçtan <b>{indexOfFirstLog + 1}-{Math.min(indexOfLastLog, logs.length)}</b> arası gösteriliyor.
+                            </span>
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                    disabled={currentPage === 1}
+                                    style={{ padding: '6px 12px', backgroundColor: currentPage === 1 ? 'transparent' : 'var(--bg-input)', color: currentPage === 1 ? 'var(--text-dark)' : 'var(--text-main)', border: '1px solid var(--border-color)', borderRadius: '4px', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+                                >
+                                    Önceki
+                                </button>
+                                <span style={{ padding: '6px 12px', fontSize: '13px', color: 'var(--text-main)', backgroundColor: 'var(--bg-main)', borderRadius: '4px', border: '1px solid var(--border-color)' }}>
+                                    {currentPage} / {totalPages}
+                                </span>
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={currentPage === totalPages}
+                                    style={{ padding: '6px 12px', backgroundColor: currentPage === totalPages ? 'transparent' : 'var(--bg-input)', color: currentPage === totalPages ? 'var(--text-dark)' : 'var(--text-main)', border: '1px solid var(--border-color)', borderRadius: '4px', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+                                >
+                                    Sonraki
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                 </div>
             )}
         </div>
