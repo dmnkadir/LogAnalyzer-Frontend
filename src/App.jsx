@@ -2,8 +2,9 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import DummyLogGenerator from './pages/DummyLogGenerator'; // <-- SADECE BU IMPORT EKLENDİ
 import ProtectedRoute from './components/ProtectedRoute';
-import MainLayout from './components/layout/MainLayout'; // YENİ EKLENDİ
+import MainLayout from './components/layout/MainLayout';
 
 function App() {
     return (
@@ -13,13 +14,25 @@ function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
 
-                {/* DASHBOARD ARTIK MAIN LAYOUT'UN İÇİNDE! */}
+                {/* DASHBOARD ARTIK MAIN LAYOUT'UN İÇİNDE! (Hiç dokunulmadı) */}
                 <Route
                     path="/dashboard"
                     element={
                         <ProtectedRoute>
                             <MainLayout>
                                 <Dashboard />
+                            </MainLayout>
+                        </ProtectedRoute>
+                    }
+                />
+
+                {/* Log Generator Kısmı */}
+                <Route
+                    path="/dummy-generator"
+                    element={
+                        <ProtectedRoute>
+                            <MainLayout>
+                                <DummyLogGenerator />
                             </MainLayout>
                         </ProtectedRoute>
                     }

@@ -19,13 +19,13 @@ function Sidebar() {
     return (
         <div style={{
             width: '260px',
-            height: '100%', /* <-- İŞTE BU KISIM EKLENDİ (Sayfanın altına kadar uzatır) */
+            height: '100%',
             backgroundColor: 'var(--bg-card)',
             borderRight: '1px solid var(--border-color)',
             display: 'flex',
             flexDirection: 'column',
             padding: '20px',
-            boxSizing: 'border-box' /* Padding'in taşma yapmasını engeller */
+            boxSizing: 'border-box'
         }}>
             {/* Logo Alanı */}
             <div style={{ marginBottom: '40px', padding: '0 10px' }}>
@@ -34,11 +34,11 @@ function Sidebar() {
                 </h2>
             </div>
 
-            {/* Menü Linkleri */}
+            {/* Menü Linkleri (Tırnak işaretleri kaldırıldı!) */}
             <nav style={{ flex: 1 }}>
                 <Link to="/dashboard" style={getLinkStyle('/dashboard')}>Dashboard</Link>
                 <Link to="/reports" style={getLinkStyle('/reports')}>Incident Raporları</Link>
-                <Link to="/generator" style={getLinkStyle('/generator')}>AI Log Üretici</Link>
+                <Link to="/dummy-generator" style={getLinkStyle('/dummy-generator')}>AI Log Üretici</Link>
             </nav>
 
             {/* Alt Bilgi */}

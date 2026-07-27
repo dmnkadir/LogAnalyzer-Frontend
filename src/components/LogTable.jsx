@@ -3,7 +3,7 @@ import api from '../services/api';
 import LogFilter from './logs/LogFilter';
 import LogSearch from './logs/LogSearch';
 
-function LogTable({ refreshTrigger, sessionId }) {
+function LogTable({ refreshTrigger, selectedSessions }) {
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(false);
 
@@ -16,19 +16,17 @@ function LogTable({ refreshTrigger, sessionId }) {
     const [currentPage, setCurrentPage] = useState(1);
     const logsPerPage = 15;
 
-    // Arama veya filtre değiştiğinde sayfayı 1'e sıfırla
     useEffect(() => {
         setCurrentPage(1);
     }, [keyword, levelFilter]);
 
-    // GİZLİ VE PROFESYONEL DEBOUNCE (0.5 Saniye)
     useEffect(() => {
-        if (!sessionId) {
+        // Eğer hiçbir oturum seçili değilse tabloyu boşalt ve bekle
+        if (!selectedSessions || selectedSessions.length === 0) {
             setLogs([]);
             return;
         }
 
-        // Arka planda 500ms bekler, ekrana hiçbir bekleme mesajı yansıtmaz
         const timerId = setTimeout(async () => {
             setLoading(true);
             try {
@@ -36,7 +34,11 @@ function LogTable({ refreshTrigger, sessionId }) {
                 if (keyword) params.append('keyword', keyword);
                 if (levelFilter) params.append('level', levelFilter);
 
-                const response = await api.get(`/logs/session/${sessionId}?${params.toString()}`);
+                // Seçili tüm oturum ID'lerini URL parametresi olarak ekle
+                selectedSessions.forEach(id => params.append('sessionIds', id));
+
+                // Backend çoklu oturum filtresini yakalayacak şekilde endpointi güncelledik
+                const response = await api.get(`/logs/filter?${params.toString()}`);
                 setLogs(response.data.data || []);
             } catch (err) {
                 console.error("Loglar çekilemedi", err);
@@ -47,9 +49,8 @@ function LogTable({ refreshTrigger, sessionId }) {
 
         return () => clearTimeout(timerId);
 
-    }, [refreshTrigger, sessionId, keyword, levelFilter]);
+    }, [refreshTrigger, selectedSessions, keyword, levelFilter]);
 
-    // Sayfalama Hesaplamaları
     const indexOfLastLog = currentPage * logsPerPage;
     const indexOfFirstLog = indexOfLastLog - logsPerPage;
     const currentLogs = logs.slice(indexOfFirstLog, indexOfLastLog);
@@ -84,11 +85,11 @@ function LogTable({ refreshTrigger, sessionId }) {
         </span>;
     };
 
-    if (!sessionId) {
+    if (!selectedSessions || selectedSessions.length === 0) {
         return (
             <div style={{ marginTop: '40px', backgroundColor: 'var(--bg-card)', padding: '40px 20px', borderRadius: '8px', border: '1px solid var(--border-color)', textAlign: 'center' }}>
                 <span style={{ fontSize: '32px', display: 'block', marginBottom: '10px' }}>📂</span>
-                <p style={{ fontSize: '16px', color: 'var(--text-muted)', margin: 0 }}>Lütfen logları görüntülemek için yukarıdan bir oturum seçin.</p>
+                <p style={{ fontSize: '16px', color: 'var(--text-muted)', margin: 0 }}>Log tablosunu ve grafikleri görüntülemek için lütfen yukarıdan en az bir oturum seçin.</p>
             </div>
         );
     }
@@ -134,7 +135,7 @@ function LogTable({ refreshTrigger, sessionId }) {
                         animation: 'spin 1s linear infinite'
                     }}></div>
                     <div style={{ marginTop: '15px', fontWeight: '500' }}>
-                        Loglar getiriliyor...
+                        Seçili oturumların logları getiriliyor...
                     </div>
                 </div>
             ) : (

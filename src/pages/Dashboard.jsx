@@ -11,33 +11,37 @@ function Dashboard() {
     const [message, setMessage] = useState('');
 
     const [stats, setStats] = useState({
-        totalLogs: 0,
-        errorCount: 0,
-        warnCount: 0,
-        infoCount: 0,
-        debugCount: 0,
-        mostFrequentException: null,
-        mostErrorProneClass: null,
-        firstErrorTime: null,
-        lastErrorTime: null
+        totalLogs: 0, errorCount: 0, warnCount: 0, infoCount: 0, debugCount: 0,
+        mostFrequentException: null, mostErrorProneClass: null, firstErrorTime: null, lastErrorTime: null
     });
 
     const [refreshTrigger, setRefreshTrigger] = useState(0);
     const [sessions, setSessions] = useState([]);
-    const [selectedSessionId, setSelectedSessionId] = useState('');
+
+    // Artık tek bir ID değil, seçili ID'lerin bir dizisini tutuyoruz
+    const [selectedSessions, setSelectedSessions] = useState([]);
+
     const [sessionReport, setSessionReport] = useState('');
     const [isReportLoading, setIsReportLoading] = useState(false);
 
+    // Oturum seçimleri değiştiğinde istatistikleri yeniden çek
     useEffect(() => {
         setSessionReport('');
-    }, [selectedSessionId]);
+        fetchStats(selectedSessions);
+    }, [selectedSessions]);
+
+    // Sayfa ilk yüklendiğinde oturumları getir
+    useEffect(() => {
+        fetchSessions();
+    }, []);
 
     const handleAnalyzeSession = async () => {
-        if (!selectedSessionId) return;
+        if (selectedSessions.length === 0) return;
         setIsReportLoading(true);
         setSessionReport('');
         try {
-            const response = await api.get(`/ai/analyze-session/${selectedSessionId}`);
+            // Eğer birden fazla oturum varsa, AI'ye virgülle ayrılarak gönderilir
+            const response = await api.get(`/ai/analyze-session/${selectedSessions.join(',')}`);
             setSessionReport(response.data.data);
         } catch (error) {
             setSessionReport("Rapor oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.");
@@ -45,11 +49,6 @@ function Dashboard() {
             setIsReportLoading(false);
         }
     };
-
-    useEffect(() => {
-        fetchStats();
-        fetchSessions();
-    }, []);
 
     const handleFileChange = (e) => {
         setFile(e.target.files[0]);
@@ -65,7 +64,6 @@ function Dashboard() {
         try {
             const response = await api.post('/logs/upload', formData);
             setMessage(response.data.message);
-            fetchStats();
             fetchSessions();
             setRefreshTrigger(prev => prev + 1);
         } catch (error) {
@@ -73,9 +71,23 @@ function Dashboard() {
         }
     };
 
-    const fetchStats = async () => {
+    // İstatistikleri çekerken sadece seçili oturumları baz alıyoruz
+    const fetchStats = async (sessionsToFetch = selectedSessions) => {
         try {
-            const response = await api.get('/logs/stats');
+            // Eğer hiçbir oturum seçili değilse kartları sıfırla
+            if (sessionsToFetch.length === 0) {
+                setStats({
+                    totalLogs: 0, errorCount: 0, warnCount: 0, infoCount: 0, debugCount: 0,
+                    mostFrequentException: null, mostErrorProneClass: null, firstErrorTime: null, lastErrorTime: null
+                });
+                return;
+            }
+
+            // Backend'e seçili ID'leri URL parametresi olarak gönderiyoruz (?sessionIds=id1&sessionIds=id2)
+            const params = new URLSearchParams();
+            sessionsToFetch.forEach(id => params.append('sessionIds', id));
+
+            const response = await api.get(`/logs/stats?${params.toString()}`);
             if (response.data && response.data.data) {
                 setStats({
                     totalLogs: response.data.data.totalLogs || 0,
@@ -90,7 +102,7 @@ function Dashboard() {
                 });
             }
         } catch (error) {
-            console.error("❌ İstatistikler alınamadı! Backend hatası:", error);
+            console.error("İstatistikler alınamadı! Backend hatası:", error);
         }
     };
 
@@ -99,6 +111,11 @@ function Dashboard() {
             const response = await api.get('/logs/sessions');
             if (response.data && Array.isArray(response.data.data)) {
                 setSessions(response.data.data);
+
+                // Opsiyonel: İlk yüklendiğinde en yeni oturumu otomatik seç
+                // if (response.data.data.length > 0 && selectedSessions.length === 0) {
+                //    setSelectedSessions([response.data.data[0].sessionId]);
+                // }
             } else {
                 setSessions([]);
             }
@@ -123,14 +140,14 @@ function Dashboard() {
                 {message && <p style={{ marginTop: '10px', color: 'var(--color-info)', fontWeight: 'bold' }}>{message}</p>}
             </div>
 
+            {/* YENİ CHECKBOX'LI SEÇİCİ */}
             <SessionSelector
                 sessions={sessions}
-                selectedSessionId={selectedSessionId}
-                onSessionChange={setSelectedSessionId}
-                onRefresh={() => { fetchStats(); fetchSessions(); }}
+                selectedSessions={selectedSessions}
+                onSessionChange={setSelectedSessions}
+                onRefresh={() => { fetchSessions(); fetchStats(selectedSessions); }}
             />
 
-            {/* İSTATİSTİK KARTLARI (DEBUG EKLENDİ, INFO İKONU DÜZELTİLDİ) */}
             <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -145,7 +162,7 @@ function Dashboard() {
 
             <ExceptionSummary stats={stats} />
 
-            {selectedSessionId && (
+            {selectedSessions.length > 0 && (
                 <div style={{ padding: '20px', backgroundColor: 'var(--bg-card)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <h3 style={{ margin: 0, color: 'var(--text-main)' }}>🤖 AI Incident Report (Olay Raporu)</h3>
@@ -153,7 +170,7 @@ function Dashboard() {
                             onClick={handleAnalyzeSession}
                             disabled={isReportLoading}
                             style={{ padding: '10px 20px', backgroundColor: 'var(--btn-primary)', color: 'white', border: 'none', borderRadius: '4px', cursor: isReportLoading ? 'not-allowed' : 'pointer', fontWeight: 'bold' }}>
-                            {isReportLoading ? 'Analiz Ediliyor...' : 'Tüm Oturumu Analiz Et'}
+                            {isReportLoading ? 'Analiz Ediliyor...' : 'Seçili Oturumları Analiz Et'}
                         </button>
                     </div>
 
@@ -167,7 +184,7 @@ function Dashboard() {
 
             <LogDistributionChart stats={stats} />
 
-            <LogTable refreshTrigger={refreshTrigger} sessionId={selectedSessionId} />
+            <LogTable refreshTrigger={refreshTrigger} selectedSessions={selectedSessions} />
 
         </div>
     );
