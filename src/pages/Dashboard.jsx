@@ -5,6 +5,8 @@ import StatsCard from '../components/dashboard/StatsCard';
 import LogDistributionChart from '../components/dashboard/LogDistributionChart';
 import SessionSelector from '../components/dashboard/SessionSelector';
 import ExceptionSummary from '../components/dashboard/ExceptionSummary';
+import AiAnalysisPanel from '../components/ai/AiAnalysisPanel';
+import RiskBadge from '../components/ai/RiskBadge';
 
 function Dashboard() {
     const [file, setFile] = useState(null);
@@ -18,19 +20,16 @@ function Dashboard() {
     const [refreshTrigger, setRefreshTrigger] = useState(0);
     const [sessions, setSessions] = useState([]);
 
-    // Artık tek bir ID değil, seçili ID'lerin bir dizisini tutuyoruz
     const [selectedSessions, setSelectedSessions] = useState([]);
 
     const [sessionReport, setSessionReport] = useState('');
     const [isReportLoading, setIsReportLoading] = useState(false);
 
-    // Oturum seçimleri değiştiğinde istatistikleri yeniden çek
     useEffect(() => {
         setSessionReport('');
         fetchStats(selectedSessions);
     }, [selectedSessions]);
 
-    // Sayfa ilk yüklendiğinde oturumları getir
     useEffect(() => {
         fetchSessions();
     }, []);
@@ -40,7 +39,6 @@ function Dashboard() {
         setIsReportLoading(true);
         setSessionReport('');
         try {
-            // Eğer birden fazla oturum varsa, AI'ye virgülle ayrılarak gönderilir
             const response = await api.get(`/ai/analyze-session/${selectedSessions.join(',')}`);
             setSessionReport(response.data.data);
         } catch (error) {
@@ -71,10 +69,8 @@ function Dashboard() {
         }
     };
 
-    // İstatistikleri çekerken sadece seçili oturumları baz alıyoruz
     const fetchStats = async (sessionsToFetch = selectedSessions) => {
         try {
-            // Eğer hiçbir oturum seçili değilse kartları sıfırla
             if (sessionsToFetch.length === 0) {
                 setStats({
                     totalLogs: 0, errorCount: 0, warnCount: 0, infoCount: 0, debugCount: 0,
@@ -83,7 +79,6 @@ function Dashboard() {
                 return;
             }
 
-            // Backend'e seçili ID'leri URL parametresi olarak gönderiyoruz (?sessionIds=id1&sessionIds=id2)
             const params = new URLSearchParams();
             sessionsToFetch.forEach(id => params.append('sessionIds', id));
 
@@ -111,11 +106,6 @@ function Dashboard() {
             const response = await api.get('/logs/sessions');
             if (response.data && Array.isArray(response.data.data)) {
                 setSessions(response.data.data);
-
-                // Opsiyonel: İlk yüklendiğinde en yeni oturumu otomatik seç
-                // if (response.data.data.length > 0 && selectedSessions.length === 0) {
-                //    setSelectedSessions([response.data.data[0].sessionId]);
-                // }
             } else {
                 setSessions([]);
             }
@@ -140,13 +130,14 @@ function Dashboard() {
                 {message && <p style={{ marginTop: '10px', color: 'var(--color-info)', fontWeight: 'bold' }}>{message}</p>}
             </div>
 
-            {/* YENİ CHECKBOX'LI SEÇİCİ */}
             <SessionSelector
                 sessions={sessions}
                 selectedSessions={selectedSessions}
                 onSessionChange={setSelectedSessions}
                 onRefresh={() => { fetchSessions(); fetchStats(selectedSessions); }}
             />
+
+            {selectedSessions.length > 0 && <RiskBadge stats={stats} />}
 
             <div style={{
                 display: 'grid',
@@ -162,25 +153,12 @@ function Dashboard() {
 
             <ExceptionSummary stats={stats} />
 
-            {selectedSessions.length > 0 && (
-                <div style={{ padding: '20px', backgroundColor: 'var(--bg-card)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <h3 style={{ margin: 0, color: 'var(--text-main)' }}>🤖 AI Incident Report (Olay Raporu)</h3>
-                        <button
-                            onClick={handleAnalyzeSession}
-                            disabled={isReportLoading}
-                            style={{ padding: '10px 20px', backgroundColor: 'var(--btn-primary)', color: 'white', border: 'none', borderRadius: '4px', cursor: isReportLoading ? 'not-allowed' : 'pointer', fontWeight: 'bold' }}>
-                            {isReportLoading ? 'Analiz Ediliyor...' : 'Seçili Oturumları Analiz Et'}
-                        </button>
-                    </div>
-
-                    {sessionReport && (
-                        <div style={{ marginTop: '20px', padding: '15px', backgroundColor: 'var(--bg-input)', color: 'var(--text-muted)', borderRadius: '4px', border: '1px solid var(--border-color)', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
-                            {sessionReport}
-                        </div>
-                    )}
-                </div>
-            )}
+            <AiAnalysisPanel
+                reportText={sessionReport}
+                isLoading={isReportLoading}
+                onAnalyze={handleAnalyzeSession}
+                disabled={selectedSessions.length === 0}
+            />
 
             <LogDistributionChart stats={stats} />
 

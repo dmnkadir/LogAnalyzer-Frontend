@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../services/api';
 import LogFilter from './logs/LogFilter';
 import LogSearch from './logs/LogSearch';
+import ReactMarkdown from 'react-markdown';
 
 function LogTable({ refreshTrigger, selectedSessions }) {
     const [logs, setLogs] = useState([]);
@@ -21,7 +22,6 @@ function LogTable({ refreshTrigger, selectedSessions }) {
     }, [keyword, levelFilter]);
 
     useEffect(() => {
-        // Eğer hiçbir oturum seçili değilse tabloyu boşalt ve bekle
         if (!selectedSessions || selectedSessions.length === 0) {
             setLogs([]);
             return;
@@ -33,11 +33,8 @@ function LogTable({ refreshTrigger, selectedSessions }) {
                 const params = new URLSearchParams();
                 if (keyword) params.append('keyword', keyword);
                 if (levelFilter) params.append('level', levelFilter);
-
-                // Seçili tüm oturum ID'lerini URL parametresi olarak ekle
                 selectedSessions.forEach(id => params.append('sessionIds', id));
 
-                // Backend çoklu oturum filtresini yakalayacak şekilde endpointi güncelledik
                 const response = await api.get(`/logs/filter?${params.toString()}`);
                 setLogs(response.data.data || []);
             } catch (err) {
@@ -61,7 +58,9 @@ function LogTable({ refreshTrigger, selectedSessions }) {
         setAiResponse('');
 
         try {
-            const prompt = `Aşağıdaki tek satırlık log mesajını incele ve açıkla. Yanıtın TÜRKÇE olmalıdır. Lütfen cevabını aşağıdaki formatı BİREBİR kopyalayarak ver:\n\n**Kök Neden:**\n[Kısa açıklama]\n\n**Çözüm Önerisi:**\n- [Adım 1]\n\nİncelenecek Log: "${logMessage}"`;
+            // AI'dan teknik terimleri ve exception'ları kalın (bold) yazmasını istedik.
+            const prompt = `Sen uzman bir sistem yöneticisisin. Aşağıdaki tek satırlık log mesajını incele ve açıkla. Yanıtın TÜRKÇE olmalıdır.\nÖNEMLİ: Hata isimlerini (örn: NullPointerException), IP adreslerini ve teknik terimleri mutlaka **kalın** (Markdown bold) yaz.\n\nLütfen cevabını aşağıdaki MARKDOWN formatını BİREBİR kopyalayarak ver (Başka hiçbir giriş cümlesi kurma):\n\n### Kök Neden\n[Hatanın teknik sebebini açıklayan kısa paragraf]\n\n### Çözüm Önerisi\n1. [İlk çözüm adımı]\n2. [İkinci çözüm adımı]\n\nİncelenecek Log: "${logMessage}"`;
+
             const response = await api.get(`/ai/test?soru=${encodeURIComponent(prompt)}`);
             setAiResponse(response.data.data);
         } catch (err) {
@@ -107,17 +106,31 @@ function LogTable({ refreshTrigger, selectedSessions }) {
             </div>
 
             {(isAiLoading || aiResponse) && (
-                <div style={{ marginBottom: '20px', padding: '20px', backgroundColor: 'var(--bg-input)', borderLeft: '4px solid var(--btn-primary)', borderRadius: '0 8px 8px 0' }}>
-                    <h4 style={{ margin: '0 0 10px 0', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span>🤖</span> Yapay Zeka Analizi
+                <div style={{ marginBottom: '20px', padding: '25px', backgroundColor: 'var(--bg-main)', borderLeft: '4px solid var(--btn-primary)', borderRadius: '0 8px 8px 0', border: '1px solid var(--border-color)' }}>
+                    <h4 style={{ margin: '0 0 15px 0', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '16px' }}>
+                        <span>🤖</span> Yapay Zeka Hata Analizi
                     </h4>
                     {isAiLoading ? (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-muted)' }}>
                             <div className="spinner" style={{ width: '16px', height: '16px', border: '2px solid var(--text-dark)', borderTopColor: 'var(--btn-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
-                            <span style={{ fontStyle: 'italic' }}>Yapay zeka hatayı inceliyor...</span>
+                            <span style={{ fontStyle: 'italic' }}>Yapay zeka satırı inceliyor...</span>
                         </div>
                     ) : (
-                        <p style={{ margin: 0, lineHeight: '1.6', whiteSpace: 'pre-wrap', color: 'var(--text-muted)' }}>{aiResponse}</p>
+                        <div style={{ margin: 0, lineHeight: '1.6', color: 'var(--text-muted)', fontSize: '14px' }}>
+                            <ReactMarkdown
+                                components={{
+                                    h3: ({node, ...props}) => <h3 style={{ color: 'var(--text-main)', fontSize: '15px', marginBottom: '10px', marginTop: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '5px' }} {...props} />,
+                                    // Kalın yazılar otomatik turuncu (warn) olacak
+                                    strong: ({node, ...props}) => <strong style={{ color: 'var(--color-warn)', fontWeight: 'bold' }} {...props} />,
+                                    ul: ({node, ...props}) => <ul style={{ paddingLeft: '20px', margin: '10px 0' }} {...props} />,
+                                    ol: ({node, ...props}) => <ol style={{ paddingLeft: '20px', margin: '10px 0' }} {...props} />,
+                                    li: ({node, ...props}) => <li style={{ marginBottom: '5px' }} {...props} />,
+                                    p: ({node, ...props}) => <p style={{ margin: '0 0 10px 0' }} {...props} />
+                                }}
+                            >
+                                {aiResponse}
+                            </ReactMarkdown>
+                        </div>
                     )}
                     <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
                 </div>
