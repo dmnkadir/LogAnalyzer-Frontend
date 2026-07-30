@@ -2,11 +2,14 @@ import React, { useState } from 'react';
 import api from '../../services/api';
 
 const SessionSelector = ({ sessions, selectedSessions, onSessionChange, onRefresh }) => {
-    // Modal (Düzenleme Paneli) Stateleri
+    // Modal Stateleri
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingSession, setEditingSession] = useState(null);
     const [newName, setNewName] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+
+    // YENİ: Yapay zeka state'i
+    const [isSuggestingName, setIsSuggestingName] = useState(false);
 
     const isAllSelected = sessions.length > 0 && selectedSessions.length === sessions.length;
 
@@ -26,27 +29,39 @@ const SessionSelector = ({ sessions, selectedSessions, onSessionChange, onRefres
         }
     };
 
-    // Modalı Aç
-    const openEditModal = (session) => {
+    // --- MODAL İŞLEMLERİ (GÜNCELLENDİ) ---
+    const openEditModal = async (session) => {
         setEditingSession(session);
-        setNewName(session.sessionName || session.sessionId);
         setIsModalOpen(true);
+
+        if (session.sessionName) {
+            setNewName(session.sessionName);
+        } else {
+            setNewName('✨ Yapay zeka logları inceliyor...');
+            setIsSuggestingName(true);
+            try {
+                const response = await api.get(`/ai/suggest-name/session/${session.sessionId}`);
+                setNewName(response.data.data);
+            } catch (error) {
+                setNewName('Oturum ' + session.sessionId.substring(0, 4));
+            } finally {
+                setIsSuggestingName(false);
+            }
+        }
     };
 
-    // Modalı Kapat
     const closeModal = () => {
         setIsModalOpen(false);
         setEditingSession(null);
         setNewName('');
     };
 
-    // 1. İsim Güncelleme İşlemi
     const handleRename = async () => {
         if (!newName.trim()) return;
         setIsLoading(true);
         try {
             await api.put(`/logs/session/${editingSession.sessionId}/name?newName=${encodeURIComponent(newName)}`);
-            onRefresh(); // Listeyi yenile
+            onRefresh();
             closeModal();
         } catch (error) {
             alert("İsim güncellenirken bir hata oluştu.");
@@ -55,7 +70,6 @@ const SessionSelector = ({ sessions, selectedSessions, onSessionChange, onRefres
         }
     };
 
-    // 2. Silme İşlemi
     const handleDelete = async () => {
         const isConfirmed = window.confirm("⚠️ DİKKAT!\n\nBu işlem geri alınamaz. Bu oturuma ait TÜM log kayıtları veritabanından kalıcı olarak silinecektir. Emin misiniz?");
         if (!isConfirmed) return;
@@ -64,12 +78,10 @@ const SessionSelector = ({ sessions, selectedSessions, onSessionChange, onRefres
         try {
             await api.delete(`/logs/session/${editingSession.sessionId}`);
 
-            // Eğer silinen oturum şu an seçili(tikli) ise, onu seçili listeden çıkar
             if (selectedSessions.includes(editingSession.sessionId)) {
                 onSessionChange(selectedSessions.filter(id => id !== editingSession.sessionId));
             }
-
-            onRefresh(); // Listeyi yenile
+            onRefresh();
             closeModal();
         } catch (error) {
             alert("Oturum silinirken bir hata oluştu.");
@@ -121,7 +133,6 @@ const SessionSelector = ({ sessions, selectedSessions, onSessionChange, onRefres
                                 </span>
                             </label>
 
-                            {/* DÜZENLE BUTONU (SENİN İSTEDİĞİN YER) */}
                             <button
                                 onClick={() => openEditModal(session)}
                                 style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '5px', borderRadius: '4px', transition: 'background 0.2s' }}
@@ -151,20 +162,25 @@ const SessionSelector = ({ sessions, selectedSessions, onSessionChange, onRefres
                     }}>
                         <h3 style={{ margin: '0 0 15px 0', color: 'var(--text-main)' }}>Oturumu Düzenle</h3>
 
-                        <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-muted)' }}>Oturum İsmi (Alias)</label>
+                        <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-muted)' }}>Oturum İsmi (Yapay Zeka Destekli)</label>
                         <input
                             type="text"
                             value={newName}
                             onChange={(e) => setNewName(e.target.value)}
-                            placeholder="Örn: DDoS Saldırısı 14 Mart"
-                            style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', marginBottom: '25px', boxSizing: 'border-box' }}
+                            disabled={isSuggestingName}
+                            style={{
+                                width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid var(--border-color)',
+                                backgroundColor: 'var(--bg-input)',
+                                color: isSuggestingName ? 'var(--color-warn)' : 'var(--text-main)',
+                                fontStyle: isSuggestingName ? 'italic' : 'normal',
+                                marginBottom: '25px', boxSizing: 'border-box'
+                            }}
                         />
 
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            {/* SİL BUTONU (KIRMIZI) */}
                             <button
                                 onClick={handleDelete}
-                                disabled={isLoading}
+                                disabled={isLoading || isSuggestingName}
                                 style={{ padding: '8px 15px', backgroundColor: 'transparent', color: 'var(--color-error)', border: '1px solid var(--color-error)', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>
                                 Tamamen Sil
                             </button>
@@ -177,7 +193,7 @@ const SessionSelector = ({ sessions, selectedSessions, onSessionChange, onRefres
                                 </button>
                                 <button
                                     onClick={handleRename}
-                                    disabled={isLoading}
+                                    disabled={isLoading || isSuggestingName}
                                     style={{ padding: '8px 15px', backgroundColor: 'var(--btn-primary)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>
                                     {isLoading ? 'Kaydediliyor...' : 'Kaydet'}
                                 </button>

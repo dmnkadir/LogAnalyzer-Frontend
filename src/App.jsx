@@ -2,9 +2,10 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
-import DummyLogGenerator from './pages/DummyLogGenerator'; // <-- SADECE BU IMPORT EKLENDİ
+import DummyLogGenerator from './pages/DummyLogGenerator';
 import ProtectedRoute from './components/ProtectedRoute';
 import MainLayout from './components/layout/MainLayout';
+import IncidentReport from './pages/IncidentReport';
 
 function App() {
     return (
@@ -14,7 +15,7 @@ function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
 
-                {/* DASHBOARD ARTIK MAIN LAYOUT'UN İÇİNDE! (Hiç dokunulmadı) */}
+                {/* DASHBOARD MAIN LAYOUT'UN İÇİNDE! */}
                 <Route
                     path="/dashboard"
                     element={
@@ -37,6 +38,19 @@ function App() {
                         </ProtectedRoute>
                     }
                 />
+
+                {/* Rapor Geçmişi Sayfası */}
+                <Route
+                    path="/reports"
+                    element={
+                        <ProtectedRoute>
+                            <MainLayout>
+                                <IncidentReport />
+                            </MainLayout>
+                        </ProtectedRoute>
+                    }
+                />
+
             </Routes>
         </BrowserRouter>
     );

@@ -15,9 +15,16 @@ function DummyLogGenerator() {
     const [message, setMessage] = useState({ text: '', type: '' });
     const [generatedSessionId, setGeneratedSessionId] = useState(null);
 
-    const systemOptions = ['Spring Boot', 'PostgreSQL', 'Nginx', 'Docker', 'Redis', 'Kafka', 'React/Node.js'];
-    const scenarioOptions = ['NullPointerException', 'Connection Timeout', 'Out of Memory (OOME)', 'DDoS Attack', 'Slow Query', 'Unauthorized Access', 'Disk Full'];
-
+    const systemOptions = [
+        'Spring Boot', 'PostgreSQL', 'Nginx', 'Docker',
+        'Kubernetes', 'Redis', 'RabbitMQ', 'Kafka', 'React/Node.js'
+    ];
+    const scenarioOptions = [
+        'NullPointerException', 'Database Connection Lost', 'Connection Timeout',
+        'Memory Leak', 'Out of Memory (OOME)', 'HTTP 500 Internal Server Error',
+        'HTTP 404 Not Found', 'SSL Error', 'Disk Full', 'Connection Refused',
+        'Deadlock', 'DDoS Attack', 'Slow Query', 'Unauthorized Access'
+    ];
     const handleGenerate = async (e) => {
         e.preventDefault();
         setIsLoading(true);
