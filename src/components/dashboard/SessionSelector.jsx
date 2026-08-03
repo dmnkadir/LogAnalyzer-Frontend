@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react'; // useContext eklendi
 import api from '../../services/api';
+import { AiContext } from '../../context/AiContext'; // Context eklendi
 
 const SessionSelector = ({ sessions, selectedSessions, onSessionChange, onRefresh }) => {
     // Modal Stateleri
@@ -10,6 +11,7 @@ const SessionSelector = ({ sessions, selectedSessions, onSessionChange, onRefres
 
     // YENİ: Yapay zeka state'i
     const [isSuggestingName, setIsSuggestingName] = useState(false);
+    const { aiProvider } = useContext(AiContext);
 
     const isAllSelected = sessions.length > 0 && selectedSessions.length === sessions.length;
 
@@ -40,7 +42,8 @@ const SessionSelector = ({ sessions, selectedSessions, onSessionChange, onRefres
             setNewName('✨ Yapay zeka logları inceliyor...');
             setIsSuggestingName(true);
             try {
-                const response = await api.get(`/ai/suggest-name/session/${session.sessionId}`);
+                // URL'nin sonuna ?provider=${aiProvider} eklendi
+                const response = await api.get(`/ai/suggest-name/session/${session.sessionId}?provider=${aiProvider}`);
                 setNewName(response.data.data);
             } catch (error) {
                 setNewName('Oturum ' + session.sessionId.substring(0, 4));

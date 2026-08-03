@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react'; // useContext eklendi
 import api from '../../services/api';
 import ReactMarkdown from 'react-markdown';
+import { AiContext } from '../../context/AiContext';
 
 const ExceptionExplainModal = ({ isOpen, onClose, exceptionName }) => {
     const [aiResponse, setAiResponse] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const { aiProvider } = useContext(AiContext);
 
     useEffect(() => {
         // Modal açıldığında ve bir exception adı geldiğinde Backend'e istek at
@@ -20,7 +22,10 @@ const ExceptionExplainModal = ({ isOpen, onClose, exceptionName }) => {
         setAiResponse('');
         try {
             // Yeni oluşturduğumuz /explain-exception endpoint'ine istek atıyoruz
-            const response = await api.post('/ai/explain-exception', { exceptionName: name });
+            const response = await api.post('/ai/explain-exception', {
+                exceptionName: name,
+                provider: aiProvider
+            });
             setAiResponse(response.data.data);
         } catch (error) {
             setAiResponse("Yapay zeka analiz yaparken bir hata oluştu. Backend servisini kontrol edin.");

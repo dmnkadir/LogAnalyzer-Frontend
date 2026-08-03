@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react'; // useContext eklendi
 import api from '../services/api';
 import LogFilter from './logs/LogFilter';
 import LogSearch from './logs/LogSearch';
 import ReactMarkdown from 'react-markdown';
+import { AiContext } from '../context/AiContext';
 
 function LogTable({ refreshTrigger, selectedSessions }) {
+    const { aiProvider } = useContext(AiContext);
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(false);
 
@@ -61,7 +63,7 @@ function LogTable({ refreshTrigger, selectedSessions }) {
             // AI'dan teknik terimleri ve exception'ları kalın (bold) yazmasını istedik.
             const prompt = `Sen uzman bir sistem yöneticisisin. Aşağıdaki tek satırlık log mesajını incele ve açıkla. Yanıtın TÜRKÇE olmalıdır.\nÖNEMLİ: Hata isimlerini (örn: NullPointerException), IP adreslerini ve teknik terimleri mutlaka **kalın** (Markdown bold) yaz.\n\nLütfen cevabını aşağıdaki MARKDOWN formatını BİREBİR kopyalayarak ver (Başka hiçbir giriş cümlesi kurma):\n\n### Kök Neden\n[Hatanın teknik sebebini açıklayan kısa paragraf]\n\n### Çözüm Önerisi\n1. [İlk çözüm adımı]\n2. [İkinci çözüm adımı]\n\nİncelenecek Log: "${logMessage}"`;
 
-            const response = await api.get(`/ai/test?soru=${encodeURIComponent(prompt)}`);
+            const response = await api.get(`/ai/test?soru=${encodeURIComponent(prompt)}&provider=${aiProvider}`);
             setAiResponse(response.data.data);
         } catch (err) {
             console.error("Yapay zeka hatası:", err);

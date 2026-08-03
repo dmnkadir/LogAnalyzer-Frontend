@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import api from '../services/api';
 import LogTable from '../components/LogTable';
 import StatsCard from '../components/dashboard/StatsCard';
@@ -7,11 +7,11 @@ import SessionSelector from '../components/dashboard/SessionSelector';
 import ExceptionSummary from '../components/dashboard/ExceptionSummary';
 import AiAnalysisPanel from '../components/ai/AiAnalysisPanel';
 import RiskBadge from '../components/ai/RiskBadge';
+import FileUploader from '../components/logs/FileUploader';
+import { AiContext } from '../context/AiContext';
 
 function Dashboard() {
-    const [file, setFile] = useState(null);
-    const [message, setMessage] = useState('');
-
+    const { aiProvider } = useContext(AiContext);
     const [stats, setStats] = useState({
         totalLogs: 0, errorCount: 0, warnCount: 0, infoCount: 0, debugCount: 0,
         mostFrequentException: null, mostErrorProneClass: null, firstErrorTime: null, lastErrorTime: null
@@ -39,33 +39,13 @@ function Dashboard() {
         setIsReportLoading(true);
         setSessionReport('');
         try {
-            const response = await api.get(`/ai/analyze-session/${selectedSessions.join(',')}`);
+            // YENİ: URL'nin sonuna seçilen provider'ı gönderiyoruz
+            const response = await api.get(`/ai/analyze-session/${selectedSessions.join(',')}?provider=${aiProvider}`);
             setSessionReport(response.data.data);
         } catch (error) {
             setSessionReport("Rapor oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.");
         } finally {
             setIsReportLoading(false);
-        }
-    };
-
-    const handleFileChange = (e) => {
-        setFile(e.target.files[0]);
-    };
-
-    const handleUpload = async () => {
-        if (!file) {
-            setMessage("Lütfen önce bir dosya seçin.");
-            return;
-        }
-        const formData = new FormData();
-        formData.append("file", file);
-        try {
-            const response = await api.post('/logs/upload', formData);
-            setMessage(response.data.message);
-            fetchSessions();
-            setRefreshTrigger(prev => prev + 1);
-        } catch (error) {
-            setMessage("Hata: " + (error.response?.data?.message || "Dosya yüklenemedi"));
         }
     };
 
@@ -117,18 +97,13 @@ function Dashboard() {
     return (
         <div style={{ maxWidth: '1200px', margin: '0 auto', color: 'var(--text-main)', display: 'flex', flexDirection: 'column', gap: '25px', padding: '20px' }}>
 
-            <div style={{ padding: '20px', backgroundColor: 'var(--bg-card)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                <h4 style={{ marginTop: 0, color: 'var(--text-main)' }}>Yeni Log Dosyası Yükle</h4>
-                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                    <input type="file" onChange={handleFileChange} style={{ color: 'var(--text-muted)' }} />
-                    <button
-                        onClick={handleUpload}
-                        style={{ padding: '8px 20px', backgroundColor: 'var(--btn-primary)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>
-                        Yükle ve Analiz Et
-                    </button>
-                </div>
-                {message && <p style={{ marginTop: '10px', color: 'var(--color-info)', fontWeight: 'bold' }}>{message}</p>}
-            </div>
+            {/* SÜRÜKLE BIRAK BİLEŞENİ */}
+            <FileUploader
+                onUploadSuccess={() => {
+                    fetchSessions();
+                    setRefreshTrigger(prev => prev + 1);
+                }}
+            />
 
             <SessionSelector
                 sessions={sessions}

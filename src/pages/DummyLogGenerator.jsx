@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react'; // useContext eklendi
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { AiContext } from '../context/AiContext';
 
 function DummyLogGenerator() {
     const navigate = useNavigate();
+    const { aiProvider } = useContext(AiContext);
 
     const [systemType, setSystemType] = useState('Spring Boot');
     const [scenario, setScenario] = useState('NullPointerException');
@@ -53,7 +55,8 @@ function DummyLogGenerator() {
                 scenario,
                 minLines: min,
                 maxLines: max,
-                customPrompt
+                customPrompt,
+                provider: aiProvider
             };
 
             const response = await api.post('/ai/generate-dummy', payload);
