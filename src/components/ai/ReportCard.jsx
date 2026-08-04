@@ -1,6 +1,8 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import { exportToPDF, exportToHTML } from '../../utils/exportUtils';
+import { motion } from 'framer-motion';
+import { FileText, FileDown, Globe, Edit2 } from 'lucide-react';
 
 const ReportCard = ({ report, onEdit }) => {
     const reportNameDisplay = report.reportName ? report.reportName : `${report.sessionId.substring(0, 8)}...`;
@@ -13,7 +15,7 @@ const ReportCard = ({ report, onEdit }) => {
         <div style={{ backgroundColor: 'var(--bg-card)', padding: '25px', borderRadius: '8px', border: '1px solid var(--border-color)', marginBottom: '20px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '15px', marginBottom: '15px', flexWrap: 'wrap', gap: '10px' }}>
                 <h4 style={{ margin: 0, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span>📄</span> Rapor:
+                    <FileText size={18} color="var(--text-muted)" /> Rapor:
                     <span style={{ color: 'var(--btn-primary)' }}>
                         {reportNameDisplay}
                     </span>
@@ -25,28 +27,36 @@ const ReportCard = ({ report, onEdit }) => {
                     </span>
 
                     {/* YENİ: Dışa Aktar Butonları */}
-                    <button
+                    <motion.button
+                        whileHover={{ scale: 1.1, color: 'var(--color-error)' }}
+                        whileTap={{ scale: 0.9 }}
                         onClick={() => exportToPDF(reportElementId, `${exportFileName}.pdf`)}
-                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '5px', borderRadius: '4px', transition: 'background 0.2s', fontSize: '16px' }}
-                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-main)'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                        title="PDF Olarak İndir">📄</button>
+                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '5px', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}
+                        title="PDF Olarak İndir"
+                    >
+                        <FileDown size={18} />
+                    </motion.button>
 
-                    <button
+                    <motion.button
+                        whileHover={{ scale: 1.1, color: 'var(--color-info)' }}
+                        whileTap={{ scale: 0.9 }}
                         onClick={() => exportToHTML(reportElementId, `${exportFileName}.html`)}
-                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '5px', borderRadius: '4px', transition: 'background 0.2s', fontSize: '16px' }}
-                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-main)'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                        title="HTML Olarak İndir">🌐</button>
+                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '5px', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}
+                        title="HTML Olarak İndir"
+                    >
+                        <Globe size={18} />
+                    </motion.button>
 
                     {/* DÜZENLEME BUTONU */}
-                    <button
+                    <motion.button
+                        whileHover={{ scale: 1.1, color: 'var(--btn-primary)' }}
+                        whileTap={{ scale: 0.9 }}
                         onClick={() => onEdit(report)}
-                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '5px', borderRadius: '4px', transition: 'background 0.2s', fontSize: '16px', marginLeft: '5px' }}
-                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-main)'}
-                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '5px', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', marginLeft: '5px' }}
                         title="Raporu Düzenle / Sil"
                     >
-                        ✏️
-                    </button>
+                        <Edit2 size={18} />
+                    </motion.button>
                 </div>
             </div>
 

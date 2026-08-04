@@ -1,9 +1,15 @@
-import { useState, useEffect, useContext } from 'react'; // useContext eklendi
+import { useState, useEffect, useContext } from 'react';
 import api from '../services/api';
 import LogFilter from './logs/LogFilter';
 import LogSearch from './logs/LogSearch';
 import ReactMarkdown from 'react-markdown';
 import { AiContext } from '../context/AiContext';
+import SkeletonLoader from './common/SkeletonLoader';
+import EmptyState from './common/EmptyState';
+import { motion } from 'framer-motion';
+// YENİ: İlgili marka ve tasarım ikonları eklendi
+import { List, Sparkles, Search, Cpu, Code, Brain, Bot } from 'lucide-react';
+import { SiNvidia, SiGoogle } from 'react-icons/si';
 
 function LogTable({ refreshTrigger, selectedSessions }) {
     const { aiProvider } = useContext(AiContext);
@@ -18,6 +24,18 @@ function LogTable({ refreshTrigger, selectedSessions }) {
 
     const [currentPage, setCurrentPage] = useState(1);
     const logsPerPage = 15;
+
+    // YENİ: Seçili AI modeline göre dinamik ikon getiren yardımcı fonksiyon
+    const getProviderIcon = (provider, size = 14) => {
+        if (!provider) return <Bot size={size} color="var(--btn-primary)" />;
+        if (provider.includes('gemini')) return <Sparkles size={size} color="#8A2BE2" />;
+        if (provider.includes('groq')) return <Cpu size={size} color="#F97316" />;
+        if (provider.includes('nvidia')) return <SiNvidia size={size} color="#76B900" />;
+        if (provider.includes('cohere')) return <Code size={size} color="#3B82F6" />;
+        if (provider.includes('google')) return <SiGoogle size={size} color="#4285F4" />;
+        if (provider.includes('openai')) return <Brain size={size} color="#10A37F" />;
+        return <Bot size={size} color="var(--btn-primary)" />; // Varsayılan
+    };
 
     useEffect(() => {
         setCurrentPage(1);
@@ -60,7 +78,6 @@ function LogTable({ refreshTrigger, selectedSessions }) {
         setAiResponse('');
 
         try {
-            // AI'dan teknik terimleri ve exception'ları kalın (bold) yazmasını istedik.
             const prompt = `Sen uzman bir sistem yöneticisisin. Aşağıdaki tek satırlık log mesajını incele ve açıkla. Yanıtın TÜRKÇE olmalıdır.\nÖNEMLİ: Hata isimlerini (örn: NullPointerException), IP adreslerini ve teknik terimleri mutlaka **kalın** (Markdown bold) yaz.\n\nLütfen cevabını aşağıdaki MARKDOWN formatını BİREBİR kopyalayarak ver (Başka hiçbir giriş cümlesi kurma):\n\n### Kök Neden\n[Hatanın teknik sebebini açıklayan kısa paragraf]\n\n### Çözüm Önerisi\n1. [İlk çözüm adımı]\n2. [İkinci çözüm adımı]\n\nİncelenecek Log: "${logMessage}"`;
 
             const response = await api.get(`/ai/test?soru=${encodeURIComponent(prompt)}&provider=${aiProvider}`);
@@ -88,9 +105,12 @@ function LogTable({ refreshTrigger, selectedSessions }) {
 
     if (!selectedSessions || selectedSessions.length === 0) {
         return (
-            <div style={{ marginTop: '40px', backgroundColor: 'var(--bg-card)', padding: '40px 20px', borderRadius: '8px', border: '1px solid var(--border-color)', textAlign: 'center' }}>
-                <span style={{ fontSize: '32px', display: 'block', marginBottom: '10px' }}>📂</span>
-                <p style={{ fontSize: '16px', color: 'var(--text-muted)', margin: 0 }}>Log tablosunu ve grafikleri görüntülemek için lütfen yukarıdan en az bir oturum seçin.</p>
+            <div style={{ marginTop: '40px' }}>
+                <EmptyState
+                    icon={<List size={48} color="var(--text-muted)" strokeWidth={1.5} />}
+                    title="Oturum Seçilmedi"
+                    description="Log tablosunu görüntülemek için yukarıdan en az bir oturum seçin."
+                />
             </div>
         );
     }
@@ -99,7 +119,9 @@ function LogTable({ refreshTrigger, selectedSessions }) {
         <div style={{ marginTop: '40px', backgroundColor: 'var(--bg-card)', padding: '20px', borderRadius: '8px', border: '1px solid var(--border-color)', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', borderBottom: '1px solid var(--border-color)', paddingBottom: '20px', marginBottom: '20px' }}>
-                <h3 style={{ margin: 0, color: 'var(--text-main)', fontSize: '18px' }}>📑 Detaylı Log Listesi</h3>
+                <h3 style={{ margin: 0, color: 'var(--text-main)', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <List size={20} color="var(--btn-primary)" /> Detaylı Log Listesi
+                </h3>
 
                 <div style={{ display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
                     <LogSearch keyword={keyword} onSearchChange={setKeyword} />
@@ -110,7 +132,8 @@ function LogTable({ refreshTrigger, selectedSessions }) {
             {(isAiLoading || aiResponse) && (
                 <div style={{ marginBottom: '20px', padding: '25px', backgroundColor: 'var(--bg-main)', borderLeft: '4px solid var(--btn-primary)', borderRadius: '0 8px 8px 0', border: '1px solid var(--border-color)' }}>
                     <h4 style={{ margin: '0 0 15px 0', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '16px' }}>
-                        <span>🤖</span> Yapay Zeka Hata Analizi
+                        {/* YENİ: Başlık yanındaki ikon artık dinamik! */}
+                        {getProviderIcon(aiProvider, 18)} Yapay Zeka Hata Analizi
                     </h4>
                     {isAiLoading ? (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-muted)' }}>
@@ -122,7 +145,6 @@ function LogTable({ refreshTrigger, selectedSessions }) {
                             <ReactMarkdown
                                 components={{
                                     h3: ({node, ...props}) => <h3 style={{ color: 'var(--text-main)', fontSize: '15px', marginBottom: '10px', marginTop: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '5px' }} {...props} />,
-                                    // Kalın yazılar otomatik turuncu (warn) olacak
                                     strong: ({node, ...props}) => <strong style={{ color: 'var(--color-warn)', fontWeight: 'bold' }} {...props} />,
                                     ul: ({node, ...props}) => <ul style={{ paddingLeft: '20px', margin: '10px 0' }} {...props} />,
                                     ol: ({node, ...props}) => <ol style={{ paddingLeft: '20px', margin: '10px 0' }} {...props} />,
@@ -139,19 +161,12 @@ function LogTable({ refreshTrigger, selectedSessions }) {
             )}
 
             {loading ? (
-                <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-muted)' }}>
-                    <div style={{
-                        display: 'inline-block',
-                        width: '32px',
-                        height: '32px',
-                        border: '3px solid var(--border-color)',
-                        borderTopColor: 'var(--btn-primary)',
-                        borderRadius: '50%',
-                        animation: 'spin 1s linear infinite'
-                    }}></div>
-                    <div style={{ marginTop: '15px', fontWeight: '500' }}>
-                        Seçili oturumların logları getiriliyor...
-                    </div>
+                <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <SkeletonLoader height="35px" />
+                    <SkeletonLoader height="35px" />
+                    <SkeletonLoader height="35px" />
+                    <SkeletonLoader height="35px" />
+                    <SkeletonLoader height="35px" />
                 </div>
             ) : (
                 <div style={{ overflowX: 'auto' }}>
@@ -166,7 +181,11 @@ function LogTable({ refreshTrigger, selectedSessions }) {
                         </thead>
                         <tbody>
                         {currentLogs.map((log, index) => (
-                            <tr key={log.id}
+                            <motion.tr
+                                key={log.id}
+                                initial={{ opacity: 0, y: 15 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.3, delay: index * 0.05 }}
                                 style={{
                                     borderBottom: '1px solid var(--border-color)',
                                     backgroundColor: index % 2 === 0 ? 'transparent' : 'var(--bg-main)',
@@ -176,7 +195,7 @@ function LogTable({ refreshTrigger, selectedSessions }) {
                                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = index % 2 === 0 ? 'transparent' : 'var(--bg-main)'}
                             >
                                 <td style={{ padding: '12px 10px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
-                                    {log.createdAt || '-'}
+                                    {log.logTimestamp ? log.logTimestamp.replace('T', ' ') : (log.createdAt ? log.createdAt.replace('T', ' ') : '-')}
                                 </td>
                                 <td style={{ padding: '12px 10px' }}>
                                     <span style={{
@@ -196,7 +215,9 @@ function LogTable({ refreshTrigger, selectedSessions }) {
                                 </td>
                                 <td style={{ padding: '12px 10px', textAlign: 'right' }}>
                                     {(log.logLevel === 'ERROR' || (log.message && log.message.includes('ERROR'))) && (
-                                        <button
+                                        <motion.button
+                                            whileHover={{ scale: 1.05 }}
+                                            whileTap={{ scale: 0.95 }}
                                             onClick={() => handleAskAI(log.message)}
                                             style={{
                                                 padding: '6px 12px',
@@ -207,24 +228,29 @@ function LogTable({ refreshTrigger, selectedSessions }) {
                                                 cursor: 'pointer',
                                                 fontWeight: 'bold',
                                                 fontSize: '12px',
-                                                transition: 'all 0.2s ease'
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '6px',
                                             }}
                                             onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--btn-primary)'; e.currentTarget.style.color = 'white'; }}
                                             onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--btn-primary)'; }}
                                         >
-                                            🤖 AI Açıkla
-                                        </button>
+                                            {/* YENİ: Buton içindeki ikon artık dinamik! */}
+                                            {getProviderIcon(aiProvider, 14)} AI Açıkla
+                                        </motion.button>
                                     )}
                                 </td>
-                            </tr>
+                            </motion.tr>
                         ))}
                         </tbody>
                     </table>
 
                     {logs.length === 0 && (
-                        <div style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)' }}>
-                            Bu kriterlere uygun log bulunamadı.
-                        </div>
+                        <EmptyState
+                            icon={<Search size={48} color="var(--text-muted)" strokeWidth={1.5} />}
+                            title="Sonuç Bulunamadı"
+                            description="Arama kriterlerinize veya seçtiğiniz log seviyesine uygun kayıt yok."
+                        />
                     )}
 
                     {totalPages > 1 && (

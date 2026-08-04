@@ -74,3 +74,51 @@ body {
         width: 100% !important;
     }
 }
+
+/* Skeleton Loader Animasyonu */
+.skeleton-loader {
+    background: linear-gradient(90deg, var(--bg-input) 25%, var(--bg-main) 50%, var(--bg-input) 75%);
+    background-size: 200% 100%;
+    animation: skeletonLoading 1.5s infinite linear;
+}
+
+@keyframes skeletonLoading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Tüm Butonlara Tıklama Hissiyatı */
+button {
+    transition: transform 0.1s ease-in-out, box-shadow 0.2s ease, filter 0.2s ease !important;
+}
+
+button:hover:not(:disabled) {
+    filter: brightness(1.1);
+}
+
+button:active:not(:disabled) {
+    transform: scale(0.96);
+}
+
+/* Header Mobil Responsive İlavesi (Mevcut media query içine de koyabilirsin) */
+@media (max-width: 768px) {
+    header {
+        flex-direction: column !important;
+        gap: 15px;
+    }
+    header > div {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+}
+
+select:focus, select:active, select:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+}
