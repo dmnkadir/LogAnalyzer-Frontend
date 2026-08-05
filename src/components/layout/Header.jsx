@@ -29,7 +29,7 @@ function Header({ theme, toggleTheme }) {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // YENİ: Seçili AI modeline göre dinamik ikon getiren yardımcı fonksiyon
+    // Seçili AI modeline göre dinamik ikon getiren yardımcı fonksiyon
     const getProviderIcon = (provider, size = 14) => {
         if (!provider) return <Bot size={size} color="var(--btn-primary)" />;
         if (provider.includes('gemini')) return <Sparkles size={size} color="#8A2BE2" />;
@@ -41,12 +41,11 @@ function Header({ theme, toggleTheme }) {
         return <Bot size={size} color="var(--btn-primary)" />; // Varsayılan
     };
 
-    // Modeller ve onlara özel İkonlar (Liste içi kullanım)
     const modelOptions = [
         {
             group: "Standart Modeller",
             items: [
-                { value: "gemini-3.6-flash", label: "Gemini 3.6 Flash", icon: <Sparkles size={14} color="#8A2BE2" /> },
+                { value: "gemini-flash-latest", label: "Gemini Flash Latest", icon: <Sparkles size={14} color="#8A2BE2" /> },
                 { value: "groq", label: "Groq Llama 3.3", icon: <Cpu size={14} color="#F97316" /> }
             ]
         },
@@ -67,19 +66,20 @@ function Header({ theme, toggleTheme }) {
         }
     ];
 
-    // Seçili modeli bul (Ekranda ismini göstermek için)
     const selectedModel = modelOptions.flatMap(g => g.items).find(i => i.value === aiProvider);
     const selectedLabel = selectedModel ? selectedModel.label : "Model Seçin";
 
     return (
-        <header style={{
+        <header className="glass-panel" style={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             padding: '15px 30px',
-            backgroundColor: 'var(--bg-card)',
             borderBottom: '1px solid var(--border-color)',
-            position: 'relative', zIndex: 100
+            position: 'sticky', // YENİ: Scroll anında yukarıda kalması için
+            top: 0,
+            zIndex: 100,
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)' // YENİ: Header altına hafif gölge
         }}>
             <h2 style={{ margin: 0, color: 'var(--text-main)', fontSize: '20px', fontWeight: 'bold' }}>
                 Log Analyzer Panel
@@ -87,23 +87,21 @@ function Header({ theme, toggleTheme }) {
 
             <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
 
-                {/* CUSTOM AI MODEL SEÇİCİ (Kendi Yazdığımız) */}
+                {/* CUSTOM AI MODEL SEÇİCİ */}
                 <div ref={dropdownRef} style={{ position: 'relative', height: '42px' }}>
-
-                    {/* Seçici Buton */}
                     <div
                         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                         style={{
                             display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: 'var(--bg-input)',
-                            padding: '0 15px', borderRadius: '6px', border: '1px solid var(--border-color)',
+                            padding: '0 15px', borderRadius: '8px', border: '1px solid var(--border-color)', // YENİ: BorderRadius 8px
                             height: '100%', boxSizing: 'border-box', cursor: 'pointer',
                             color: 'var(--text-main)', fontWeight: 'bold', fontSize: '14px',
                             minWidth: '240px', justifyContent: 'space-between',
-                            userSelect: 'none'
+                            userSelect: 'none',
+                            boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.05)' // YENİ: Premium hissiyat için iç gölge
                         }}
                     >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            {/* YENİ: İkon dinamik olarak değişecek (Boyut 18px yapıldı ki Header'da tok dursun) */}
                             {getProviderIcon(aiProvider, 18)}
                             <span>{selectedLabel}</span>
                         </div>
@@ -116,7 +114,6 @@ function Header({ theme, toggleTheme }) {
                         />
                     </div>
 
-                    {/* Açılır Menü (Dropdown) */}
                     <AnimatePresence>
                         {isDropdownOpen && (
                             <motion.div
@@ -124,10 +121,11 @@ function Header({ theme, toggleTheme }) {
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -10 }}
                                 transition={{ duration: 0.2 }}
+                                className="glass-panel" // YENİ: Dropdown içi de cam efekti aldı
                                 style={{
                                     position: 'absolute', top: 'calc(100% + 8px)', left: 0, width: '100%',
-                                    backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)',
-                                    borderRadius: '8px', boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+                                    border: '1px solid var(--border-color)',
+                                    borderRadius: '8px', boxShadow: '0 8px 30px rgba(0,0,0,0.3)', // YENİ: Daha derin gölge
                                     overflow: 'hidden', zIndex: 150
                                 }}
                             >
@@ -169,7 +167,7 @@ function Header({ theme, toggleTheme }) {
 
                 {/* TEMA DEĞİŞTİRİCİ */}
                 <motion.button
-                    whileHover={{ opacity: 0.8 }}
+                    whileHover={{ opacity: 0.8, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }} // YENİ: Hover Gölgesi
                     whileTap={{ opacity: 0.6 }}
                     onClick={toggleTheme}
                     title={theme === 'dark' ? 'Açık Temaya Geç' : 'Koyu Temaya Geç'}
@@ -178,20 +176,20 @@ function Header({ theme, toggleTheme }) {
                         backgroundColor: 'var(--bg-input)', color: 'var(--text-main)',
                         border: '1px solid var(--border-color)', borderRadius: '8px',
                         cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)', boxSizing: 'border-box'
+                        boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.05)', boxSizing: 'border-box'
                     }}>
                     {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
                 </motion.button>
 
                 {/* ÇIKIŞ YAP BUTONU */}
                 <motion.button
-                    whileHover={{ opacity: 0.8 }}
+                    whileHover={{ opacity: 0.9, boxShadow: '0 4px 12px rgba(237, 66, 69, 0.3)' }} // YENİ: Kırmızı parlama gölgesi
                     whileTap={{ opacity: 0.6 }}
                     onClick={handleLogout}
                     style={{
                         height: '42px', padding: '0 20px',
                         backgroundColor: 'var(--btn-danger)', color: 'white',
-                        border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold',
+                        border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', // YENİ: BorderRadius 8px
                         display: 'flex', alignItems: 'center', gap: '8px', boxSizing: 'border-box'
                     }}>
                     <LogOut size={16} />

@@ -3,7 +3,8 @@ import api from '../../services/api';
 import { AiContext } from '../../context/AiContext';
 import EmptyState from '../common/EmptyState';
 import Toast from '../common/Toast';
-import { Sparkles, Cpu, Code, Brain, Pin, FolderOpen, Edit2 } from 'lucide-react';
+// YENİ: RefreshCw ikonu import edildi
+import { Sparkles, Cpu, Code, Brain, Pin, FolderOpen, Edit2, RefreshCw } from 'lucide-react';
 import { SiNvidia, SiGoogle } from 'react-icons/si';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -36,7 +37,7 @@ const SessionSelector = ({ sessions, selectedSessions, onSessionChange, onRefres
         {
             group: "Standart Modeller",
             items: [
-                { value: "gemini-3.6-flash", label: "Gemini 3.6 Flash", icon: <Sparkles size={14} color="#8A2BE2" /> },
+                { value: "gemini-flash-latest", label: "Gemini Flash Latest", icon: <Sparkles size={14} color="#8A2BE2" /> },
                 { value: "groq", label: "Groq Llama 3.3", icon: <Cpu size={14} color="#F97316" /> }
             ]
         },
@@ -87,11 +88,17 @@ const SessionSelector = ({ sessions, selectedSessions, onSessionChange, onRefres
 
         try {
             const response = await api.get(`/ai/suggest-name/session/${editingSession.sessionId}?provider=${providerValue}`);
-            setNewName(response.data.data);
+            const suggested = response.data.data;
+
+            if (suggested.length > 60 || suggested.toLowerCase().includes('error') || suggested.toLowerCase().includes('ulaşılamadı')) {
+                throw new Error("Geçersiz veya çok uzun AI yanıtı");
+            }
+
+            setNewName(suggested);
             showToast("İsim önerisi başarıyla alındı.", "success");
         } catch (error) {
             setNewName(editingSession.sessionName || '');
-            showToast("İsim önerisi alınırken hata oluştu.", "error");
+            showToast("Geçerli bir isim önerisi alınamadı (Bağlantı/API Hatası).", "error");
         } finally {
             setIsSuggestingName(false);
         }
@@ -141,11 +148,12 @@ const SessionSelector = ({ sessions, selectedSessions, onSessionChange, onRefres
                 <h4 style={{ margin: 0, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <Pin size={18} color="var(--btn-primary)" /> Analiz Edilecek Oturumları Seçin
                 </h4>
+                {/* YENİ: Emoji silindi, vektörel ikon ve flex hizalaması eklendi */}
                 <motion.button
                     whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                     onClick={onRefresh}
-                    style={{ padding: '8px 15px', backgroundColor: 'var(--btn-success)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
-                    🔄 Verileri Yenile
+                    style={{ padding: '8px 15px', backgroundColor: 'var(--btn-success)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <RefreshCw size={14} /> Verileri Yenile
                 </motion.button>
             </div>
 

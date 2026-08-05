@@ -2,15 +2,14 @@ import React, { useContext } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { exportToPDF, exportToHTML } from '../../utils/exportUtils';
 import { AiContext } from '../../context/AiContext';
-import { Sparkles, Cpu, Code, Brain, Bot, FileDown, Globe } from 'lucide-react';
+import { Sparkles, Cpu, Code, Brain, Bot, FileDown, Globe, AlertTriangle } from 'lucide-react';
 import { SiNvidia, SiGoogle } from 'react-icons/si';
 
-const AiAnalysisPanel = ({ reportText, isLoading, onAnalyze, disabled }) => {
-    // Context'ten seçili AI sağlayıcısını çekiyoruz
+// reportError prop'u eklendi
+const AiAnalysisPanel = ({ reportText, reportError, isLoading, onAnalyze, disabled }) => {
     const { aiProvider } = useContext(AiContext);
     const reportElementId = "dashboard-ai-report";
 
-    // İkonlara orijinal marka renklerini Header ve LogTable'daki ile birebir aynı verdik
     const getProviderIcon = (provider, size = 16) => {
         if (!provider) return <Bot size={size} color="var(--btn-primary)" />;
         if (provider.includes('gemini')) return <Sparkles size={size} color="#8A2BE2" />;
@@ -19,21 +18,20 @@ const AiAnalysisPanel = ({ reportText, isLoading, onAnalyze, disabled }) => {
         if (provider.includes('cohere')) return <Code size={size} color="#3B82F6" />;
         if (provider.includes('google')) return <SiGoogle size={size} color="#4285F4" />;
         if (provider.includes('openai')) return <Brain size={size} color="#10A37F" />;
-        return <Bot size={size} color="var(--btn-primary)" />; // Varsayılan
+        return <Bot size={size} color="var(--btn-primary)" />;
     };
 
     return (
         <div style={{ padding: '20px', backgroundColor: 'var(--bg-card)', borderRadius: '8px', border: '1px solid var(--border-color)', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
 
-                {/* SOLDAKİ BAŞLIK */}
                 <h3 style={{ margin: 0, color: 'var(--text-main)', fontSize: '20px' }}>
                     AI Olay Raporu (Incident Report)
                 </h3>
 
                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                    {/* DIŞA AKTAR BUTONLARI */}
-                    {reportText && !isLoading && (
+                    {/* YENİ: Dışa aktar butonları sadece hata YOKSA ve rapor VARSA görünür */}
+                    {reportText && !isLoading && !reportError && (
                         <>
                             <button
                                 onClick={() => exportToPDF(reportElementId, 'Anlik_Analiz_Raporu.pdf')}
@@ -54,7 +52,6 @@ const AiAnalysisPanel = ({ reportText, isLoading, onAnalyze, disabled }) => {
                         </>
                     )}
 
-                    {/* ANALİZ BUTONU - PDF VE HTML BUTONLARIYLA AYNI MAVİ ÇERÇEVELİ STİL */}
                     <button
                         onClick={onAnalyze}
                         disabled={disabled || isLoading}
@@ -91,7 +88,6 @@ const AiAnalysisPanel = ({ reportText, isLoading, onAnalyze, disabled }) => {
                             </>
                         ) : (
                             <>
-                                {/* Renkli İkonumuz */}
                                 {getProviderIcon(aiProvider, 16)}
                                 Seçili Oturumları Analiz Et
                             </>
@@ -100,8 +96,25 @@ const AiAnalysisPanel = ({ reportText, isLoading, onAnalyze, disabled }) => {
                 </div>
             </div>
 
-            {/* Eğer rapor varsa Markdown olarak render et */}
-            {reportText && (
+            {/* YENİ: Hata durumu ekranı */}
+            {reportError && (
+                <div style={{
+                    marginTop: '25px', padding: '20px', backgroundColor: 'rgba(218, 55, 60, 0.05)',
+                    border: '1px dashed var(--color-error)', borderRadius: '8px', color: 'var(--color-error)',
+                    display: 'flex', alignItems: 'center', gap: '20px'
+                }}>
+                    <AlertTriangle size={48} strokeWidth={1.5} />
+                    <div>
+                        <h4 style={{ margin: '0 0 8px 0', fontSize: '18px' }}>Yapay Zeka Analizi Başarısız Oldu</h4>
+                        <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-main)', lineHeight: '1.5' }}>
+                            {reportError}
+                        </p>
+                    </div>
+                </div>
+            )}
+
+            {/* Hata yoksa ve rapor varsa standart Markdown render edilir */}
+            {reportText && !reportError && (
                 <div
                     id={reportElementId}
                     style={{

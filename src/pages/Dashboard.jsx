@@ -9,6 +9,7 @@ import AiAnalysisPanel from '../components/ai/AiAnalysisPanel';
 import RiskBadge from '../components/ai/RiskBadge';
 import FileUploader from '../components/logs/FileUploader';
 import { AiContext } from '../context/AiContext';
+import { Activity, XCircle, AlertTriangle, Info, Bug } from 'lucide-react';
 
 function Dashboard() {
     const { aiProvider } = useContext(AiContext);
@@ -23,10 +24,12 @@ function Dashboard() {
     const [selectedSessions, setSelectedSessions] = useState([]);
 
     const [sessionReport, setSessionReport] = useState('');
+    const [reportError, setReportError] = useState('');
     const [isReportLoading, setIsReportLoading] = useState(false);
 
     useEffect(() => {
         setSessionReport('');
+        setReportError('');
         fetchStats(selectedSessions);
     }, [selectedSessions]);
 
@@ -38,12 +41,14 @@ function Dashboard() {
         if (selectedSessions.length === 0) return;
         setIsReportLoading(true);
         setSessionReport('');
+        setReportError('');
+
         try {
-            // YENİ: URL'nin sonuna seçilen provider'ı gönderiyoruz
             const response = await api.get(`/ai/analyze-session/${selectedSessions.join(',')}?provider=${aiProvider}`);
             setSessionReport(response.data.data);
         } catch (error) {
-            setSessionReport("Rapor oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.");
+            const errorMsg = error.response?.data?.message || "Rapor oluşturulurken bir bağlantı veya analiz hatası oluştu.";
+            setReportError(errorMsg);
         } finally {
             setIsReportLoading(false);
         }
@@ -95,9 +100,8 @@ function Dashboard() {
     };
 
     return (
-        <div style={{ maxWidth: '1200px', margin: '0 auto', color: 'var(--text-main)', display: 'flex', flexDirection: 'column', gap: '25px', padding: '20px' }}>
-
-            {/* SÜRÜKLE BIRAK BİLEŞENİ */}
+        <div style={{ width: '100%', boxSizing: 'border-box', maxWidth: '1200px', margin: '0 auto', color: 'var(--text-main)', display: 'flex', flexDirection: 'column', gap: '25px', padding: '20px' }}>
+            {/* YENİ: width ve boxSizing eklendi, yorum satırı div'in içine alındı */}
             <FileUploader
                 onUploadSuccess={() => {
                     fetchSessions();
@@ -119,17 +123,18 @@ function Dashboard() {
                 gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
                 gap: '20px'
             }}>
-                <StatsCard title="Toplam Log" value={stats.totalLogs} icon={<span>📊</span>} colorVar="--btn-primary" delay={0.1} />
-                <StatsCard title="Kritik (ERROR)" value={stats.errorCount} icon={<span>🔴</span>} colorVar="--color-error" delay={0.2} />
-                <StatsCard title="Uyarı (WARN)" value={stats.warnCount} icon={<span>🟠</span>} colorVar="--color-warn" delay={0.3} />
-                <StatsCard title="Bilgi (INFO)" value={stats.infoCount} icon={<span>🟢</span>} colorVar="--color-info" delay={0.4} />
-                <StatsCard title="Ayıklama (DEBUG)" value={stats.debugCount} icon={<span>🔵</span>} colorVar="--btn-primary" delay={0.5} />
+                <StatsCard title="Toplam Log" value={stats.totalLogs} icon={<Activity size={26} />} colorVar="--btn-primary" delay={0.1} />
+                <StatsCard title="Kritik (ERROR)" value={stats.errorCount} icon={<XCircle size={26} />} colorVar="--color-error" delay={0.2} />
+                <StatsCard title="Uyarı (WARN)" value={stats.warnCount} icon={<AlertTriangle size={26} />} colorVar="--color-warn" delay={0.3} />
+                <StatsCard title="Bilgi (INFO)" value={stats.infoCount} icon={<Info size={26} />} colorVar="--color-info" delay={0.4} />
+                <StatsCard title="Ayıklama (DEBUG)" value={stats.debugCount} icon={<Bug size={26} />} colorVar="--btn-primary" delay={0.5} />
             </div>
 
             <ExceptionSummary stats={stats} />
 
             <AiAnalysisPanel
                 reportText={sessionReport}
+                reportError={reportError}
                 isLoading={isReportLoading}
                 onAnalyze={handleAnalyzeSession}
                 disabled={selectedSessions.length === 0}

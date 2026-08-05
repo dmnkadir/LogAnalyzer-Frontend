@@ -28,7 +28,7 @@
 }
 
 
-   /* LIGHT TEMA  */
+/* LIGHT TEMA  */
 
 [data-theme="light"] {
     /* Arka Planlar */
@@ -105,7 +105,7 @@ button:active:not(:disabled) {
     transform: scale(0.96);
 }
 
-/* Header Mobil Responsive İlavesi (Mevcut media query içine de koyabilirsin) */
+/* Header Mobil Responsive İlavesi */
 @media (max-width: 768px) {
     header {
         flex-direction: column !important;
@@ -121,4 +121,57 @@ select:focus, select:active, select:focus-visible {
     outline: none !important;
     box-shadow: none !important;
     border: none !important;
+}
+
+
+/*  YENİ: UI İYİLEŞTİRME EFEKTLERİ VE ANİMASYONLARI */
+
+/* Glassmorphism (Cam) Efekti */
+.glass-panel {
+    /* Arkadaki keskin yazıların birbirine girmesini engellemek için opaklığı %90'a çıkardık */
+    background-color: color-mix(in srgb, var(--bg-card) 90%, transparent) !important;
+
+    /* Blur seviyesini 12px'e sabitleyerek daha doğal ve profesyonel bir buzlu cam görünümü sağladık */
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+
+    /* Göz yoran ekstra iç gölgeleri kaldırdık, daha temiz bir görünüm elde ettik */
+}
+
+/* Gradient Yazı Efekti */
+.text-gradient {
+    background: linear-gradient(135deg, var(--btn-primary) 0%, #a855f7 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+}
+
+/* Sidebar Link Tasarımı */
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    text-decoration: none;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    transition: all 0.2s ease;
+    border-left: 4px solid transparent;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.sidebar-link:hover {
+    background-color: color-mix(in srgb, var(--bg-input) 60%, transparent);
+    color: var(--text-main);
+    transform: translateX(4px); /* Hover'da hafif sağa kayma efekti */
+}
+
+.sidebar-link.active {
+    background-color: color-mix(in srgb, var(--bg-input) 80%, transparent);
+    color: var(--text-main);
+    font-weight: bold;
+    border-left: 4px solid var(--btn-primary); /* Sol tarafta parlak çizgi */
+    box-shadow: inset 4px 0px 15px rgba(88, 101, 242, 0.1); /* İçeri doğru hafif bir parlama (glow) */
 }

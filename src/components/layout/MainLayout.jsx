@@ -17,16 +17,16 @@ function MainLayout({ children }) {
     return (
         <div style={{ display: 'flex', height: '100vh', backgroundColor: 'var(--bg-main)', overflow: 'hidden' }}>
 
-            {/* Sol Yan Menü (Mobil için sınıf ekledik) */}
-            <div className="app-sidebar">
+            {/* Sol Yan Menü - flexShrink: 0 eklendi ki daralmasın */}
+            <div className="app-sidebar" style={{ flexShrink: 0 }}>
                 <Sidebar />
             </div>
 
-            {/* Sağ Taraf (Üst Bar + Ana İçerik) */}
-            <div className="app-main-container" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            {/* Sağ Taraf - overflowX: hidden eklendi ki yatayda taşma yapmasın */}
+            <div className="app-main-container" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', overflowX: 'hidden', position: 'relative' }}>
                 <Header theme={theme} toggleTheme={toggleTheme} />
 
-                <main style={{ flex: 1, overflowY: 'auto', padding: '30px' }}>
+                <main style={{ flex: 1, padding: '30px', display: 'flex', flexDirection: 'column' }}>
                     {children}
                 </main>
             </div>

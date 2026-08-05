@@ -6,7 +6,12 @@ const cleanHtmlForExport = (htmlString) => {
         .replace(/var\(--text-main\)/g, '#1a1a1a')
         .replace(/var\(--text-muted\)/g, '#4b5563')
         .replace(/var\(--color-warn\)/g, '#dc2626')
-        .replace(/var\(--border-color\)/g, '#e5e7eb');
+        .replace(/var\(--border-color\)/g, '#e5e7eb')
+        // YENİ: Rozetin arka plan rengi ve diğer arka planları her zaman açık renge sabitliyoruz
+        .replace(/var\(--bg-input\)/g, '#f3f4f6')
+        .replace(/var\(--bg-card\)/g, '#ffffff')
+        .replace(/var\(--bg-main\)/g, '#ffffff')
+        .replace(/var\(--btn-primary\)/g, '#5865F2'); // İkon renklerinin bozulmaması için
 };
 
 export const exportToPDF = (elementId, filename = 'Incident_Raporu.pdf') => {

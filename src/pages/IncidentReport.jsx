@@ -41,7 +41,7 @@ function IncidentReport() {
         {
             group: "Standart Modeller",
             items: [
-                { value: "gemini-3.6-flash", label: "Gemini 3.6 Flash", icon: <Sparkles size={14} color="#8A2BE2" /> },
+                { value: "gemini-flash-latest", label: "Gemini Flash Latest", icon: <Sparkles size={14} color="#8A2BE2" /> },
                 { value: "groq", label: "Groq Llama 3.3", icon: <Cpu size={14} color="#F97316" /> }
             ]
         },
@@ -106,11 +106,19 @@ Rapor Özeti:
 ${reportContent}`;
 
             const response = await api.get(`/ai/test?soru=${encodeURIComponent(prompt)}&provider=${providerValue}`);
-            setNewName(response.data.data.replace(/["']/g, "").trim());
+            const suggested = response.data.data.replace(/["']/g, "").trim();
+
+            // --- YENİ: UZUNLUK VE HATA KONTROLÜ ---
+            if (suggested.length > 60 || suggested.toLowerCase().includes('error') || suggested.toLowerCase().includes('ulaşılamadı')) {
+                throw new Error("Geçersiz veya çok uzun AI yanıtı");
+            }
+
+            setNewName(suggested);
             showToast("İsim önerisi başarıyla alındı.", "success");
         } catch (error) {
+            // Hata alınırsa eski isme (veya boşluğa) geri dön
             setNewName(editingReport.reportName || '');
-            showToast("İsim önerisi alınırken hata oluştu.", "error");
+            showToast("Geçerli bir isim önerisi alınamadı (Bağlantı/API Hatası).", "error");
         } finally {
             setIsSuggestingName(false);
         }

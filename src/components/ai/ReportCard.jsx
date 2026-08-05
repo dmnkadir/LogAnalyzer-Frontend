@@ -2,7 +2,8 @@ import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import { exportToPDF, exportToHTML } from '../../utils/exportUtils';
 import { motion } from 'framer-motion';
-import { FileText, FileDown, Globe, Edit2 } from 'lucide-react';
+import { FileText, FileDown, Globe, Edit2, Sparkles, Cpu, Code, Brain, Bot } from 'lucide-react';
+import { SiNvidia, SiGoogle } from 'react-icons/si';
 
 const ReportCard = ({ report, onEdit }) => {
     const reportNameDisplay = report.reportName ? report.reportName : `${report.sessionId.substring(0, 8)}...`;
@@ -10,6 +11,24 @@ const ReportCard = ({ report, onEdit }) => {
     // PDF'e basılacak dosya adı ve element ID'si
     const exportFileName = report.reportName ? report.reportName.replace(/\s+/g, '_') : `Rapor_${report.id}`;
     const reportElementId = `report-content-${report.id}`;
+
+    // Model ismine veya provider'a göre ikon ve düzgün görünen etiket getiren fonksiyon
+    const getModelBadge = (providerString) => {
+        if (!providerString) return { label: 'Yapay Zeka', icon: <Bot size={14} color="var(--btn-primary)" /> };
+        const p = providerString.toLowerCase();
+
+        if (p.includes('gemini')) return { label: 'Gemini Flash Latest', icon: <Sparkles size={14} color="#8A2BE2" /> };
+        if (p.includes('groq')) return { label: 'Groq Llama 3.3', icon: <Cpu size={14} color="#F97316" /> };
+        if (p.includes('ultra')) return { label: 'Nemotron 3 Ultra', icon: <SiNvidia size={14} color="#76B900" /> };
+        if (p.includes('super') || p.includes('nvidia')) return { label: 'Nemotron 3 Super', icon: <SiNvidia size={14} color="#76B900" /> };
+        if (p.includes('cohere')) return { label: 'Cohere North Mini', icon: <Code size={14} color="#3B82F6" /> };
+        if (p.includes('gemma')) return { label: 'Google Gemma 4', icon: <SiGoogle size={14} color="#4285F4" /> };
+        if (p.includes('openai') || p.includes('gpt')) return { label: 'OpenAI gpt-oss-20b', icon: <Brain size={14} color="#10A37F" /> };
+
+        return { label: providerString, icon: <Bot size={14} color="var(--btn-primary)" /> };
+    };
+
+    const modelInfo = getModelBadge(report.provider);
 
     return (
         <div style={{ backgroundColor: 'var(--bg-card)', padding: '25px', borderRadius: '8px', border: '1px solid var(--border-color)', marginBottom: '20px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
@@ -26,7 +45,7 @@ const ReportCard = ({ report, onEdit }) => {
                         {new Date(report.createdAt).toLocaleString('tr-TR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </span>
 
-                    {/* YENİ: Dışa Aktar Butonları */}
+                    {/* Dışa Aktar Butonları */}
                     <motion.button
                         whileHover={{ scale: 1.1, color: 'var(--color-error)' }}
                         whileTap={{ scale: 0.9 }}
@@ -60,7 +79,7 @@ const ReportCard = ({ report, onEdit }) => {
                 </div>
             </div>
 
-            <div id={reportElementId} style={{ color: 'var(--text-muted)', fontSize: '14px', lineHeight: '1.6' }}>
+            <div id={reportElementId} style={{ color: 'var(--text-muted)', fontSize: '14px', lineHeight: '1.6', position: 'relative', paddingBottom: '20px' }}>
                 <ReactMarkdown
                     components={{
                         h3: ({node, ...props}) => <h3 style={{ color: 'var(--text-main)', fontSize: '15px', marginBottom: '10px', marginTop: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '5px' }} {...props} />,
@@ -73,6 +92,28 @@ const ReportCard = ({ report, onEdit }) => {
                 >
                     {report.reportContent}
                 </ReactMarkdown>
+
+                {/* YENİ: RAPORUN SAĞ ALT KÖŞESİNE EKLENEN MODEL BİLGİSİ */}
+                {report.provider && (
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'flex-end',
+                        gap: '6px',
+                        marginTop: '25px',
+                        fontSize: '12px',
+                        color: 'var(--text-muted)',
+                        fontWeight: 'bold',
+                        borderTop: '1px dashed var(--border-color)',
+                        paddingTop: '15px'
+                    }}>
+                        <span>Analizi Yapan Yapay Zeka:</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: 'var(--bg-input)', padding: '5px 10px', borderRadius: '4px', border: '1px solid var(--border-color)' }}>
+                            {modelInfo.icon}
+                            <span style={{ color: 'var(--text-main)' }}>{modelInfo.label}</span>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

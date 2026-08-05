@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
 import ExceptionExplainModal from '../ai/ExceptionExplainModal';
+// YENİ: Emojiler yerine lucide ikonları çağrıldı
+import { Zap, Bug, Clock, Timer, Sparkles } from 'lucide-react';
 
 const ExceptionSummary = ({ stats }) => {
-    // Modal State'leri
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedException, setSelectedException] = useState('');
 
-    // Veri yoksa veya hiç log yüklenmemişse boşuna yer kaplamasın
     if (!stats || stats.totalLogs === 0) return null;
 
-    // Tarih formatlamak için küçük bir yardımcı fonksiyon
     const formatDate = (dateString) => {
         if (!dateString) return "-";
         const date = new Date(dateString);
@@ -19,7 +18,6 @@ const ExceptionSummary = ({ stats }) => {
         });
     };
 
-    // Hataya tıklandığında Modalı açacak fonksiyon
     const handleExceptionClick = () => {
         if (stats.mostFrequentException) {
             setSelectedException(stats.mostFrequentException);
@@ -33,76 +31,71 @@ const ExceptionSummary = ({ stats }) => {
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
                 gap: '20px',
-                backgroundColor: 'var(--bg-card)',
-                padding: '20px',
-                borderRadius: '8px',
-                border: '1px solid var(--border-color)',
-                boxShadow: '0 4px 6px rgba(0,0,0,0.05)'
+                marginBottom: '5px'
             }}>
-                <div>
-                    <h4 style={{ margin: '0 0 5px 0', fontSize: '13px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                        ⚡ En Çok Görülen Exception
+                {/* 1. Kutu */}
+                <div style={{ backgroundColor: 'var(--bg-card)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: '0 4px 10px rgba(0,0,0,0.03)' }}>
+                    <h4 style={{ margin: '0 0 12px 0', fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Zap size={14} color="var(--color-warn)" /> En Çok Görülen
                     </h4>
-
-                    {/* DÜZ YAZI YERİNE TIKLANABİLİR BUTON */}
                     {stats.mostFrequentException ? (
                         <button
                             onClick={handleExceptionClick}
                             style={{
-                                margin: 0,
-                                fontSize: '16px',
-                                fontWeight: 'bold',
-                                color: 'var(--color-error)',
-                                background: 'transparent',
-                                border: '1px dashed var(--color-error)',
-                                borderRadius: '4px',
-                                padding: '4px 8px',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '6px'
+                                margin: 0, fontSize: '14px', fontWeight: 'bold', color: 'var(--color-error)',
+                                background: 'rgba(218, 55, 60, 0.05)', border: '1px dashed var(--color-error)',
+                                borderRadius: '6px', padding: '8px 12px', cursor: 'pointer', transition: 'all 0.3s ease',
+                                display: 'inline-flex', alignItems: 'center', gap: '8px', width: '100%', justifyContent: 'space-between'
                             }}
-                            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(218, 55, 60, 0.1)'; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = 'rgba(218, 55, 60, 0.15)';
+                                e.currentTarget.style.boxShadow = '0 0 15px rgba(218, 55, 60, 0.2)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = 'rgba(218, 55, 60, 0.05)';
+                                e.currentTarget.style.boxShadow = 'none';
+                            }}
                             title="Yapay Zeka ile Analiz Et"
                         >
-                            {stats.mostFrequentException} <span style={{ fontSize: '14px' }}>✨</span>
+                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{stats.mostFrequentException}</span>
+                            <Sparkles size={16} />
                         </button>
                     ) : (
-                        <p style={{ margin: 0, fontSize: '16px', fontWeight: 'bold', color: 'var(--text-muted)' }}>Bulunmadı</p>
+                        <p style={{ margin: 0, fontSize: '15px', fontWeight: 'bold', color: 'var(--text-muted)' }}>Bulunmadı</p>
                     )}
                 </div>
 
-                <div>
-                    <h4 style={{ margin: '0 0 5px 0', fontSize: '13px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                        🐛 En Hatalı Sınıf (Class)
+                {/* 2. Kutu */}
+                <div style={{ backgroundColor: 'var(--bg-card)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: '0 4px 10px rgba(0,0,0,0.03)' }}>
+                    <h4 style={{ margin: '0 0 12px 0', fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Bug size={14} color="var(--color-error)" /> En Hatalı Sınıf
                     </h4>
-                    <p style={{ margin: 0, fontSize: '16px', fontWeight: 'bold', color: 'var(--color-warn)' }}>
+                    <p style={{ margin: 0, fontSize: '15px', fontWeight: 'bold', color: 'var(--color-warn)', wordBreak: 'break-all' }}>
                         {stats.mostErrorProneClass || "Bulunmadı"}
                     </p>
                 </div>
 
-                <div>
-                    <h4 style={{ margin: '0 0 5px 0', fontSize: '13px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                        🕒 İlk Hata Zamanı
+                {/* 3. Kutu */}
+                <div style={{ backgroundColor: 'var(--bg-card)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: '0 4px 10px rgba(0,0,0,0.03)' }}>
+                    <h4 style={{ margin: '0 0 12px 0', fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Clock size={14} color="var(--color-info)" /> İlk Hata Zamanı
                     </h4>
-                    <p style={{ margin: 0, fontSize: '16px', fontWeight: 'bold', color: 'var(--text-main)' }}>
+                    <p style={{ margin: 0, fontSize: '15px', fontWeight: 'bold', color: 'var(--text-main)' }}>
                         {formatDate(stats.firstErrorTime)}
                     </p>
                 </div>
 
-                <div>
-                    <h4 style={{ margin: '0 0 5px 0', fontSize: '13px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                        ⏳ Son Hata Zamanı
+                {/* 4. Kutu */}
+                <div style={{ backgroundColor: 'var(--bg-card)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: '0 4px 10px rgba(0,0,0,0.03)' }}>
+                    <h4 style={{ margin: '0 0 12px 0', fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Timer size={14} color="var(--btn-primary)" /> Son Hata Zamanı
                     </h4>
-                    <p style={{ margin: 0, fontSize: '16px', fontWeight: 'bold', color: 'var(--text-main)' }}>
+                    <p style={{ margin: 0, fontSize: '15px', fontWeight: 'bold', color: 'var(--text-main)' }}>
                         {formatDate(stats.lastErrorTime)}
                     </p>
                 </div>
             </div>
 
-            {/* YENİ: MODAL BİLEŞENİNİN EKLENDİĞİ YER */}
             <ExceptionExplainModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}

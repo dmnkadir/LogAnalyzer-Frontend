@@ -25,7 +25,7 @@ function LogTable({ refreshTrigger, selectedSessions }) {
     const [currentPage, setCurrentPage] = useState(1);
     const logsPerPage = 15;
 
-    // YENİ: Seçili AI modeline göre dinamik ikon getiren yardımcı fonksiyon
+    // Seçili AI modeline göre dinamik ikon getiren yardımcı fonksiyon
     const getProviderIcon = (provider, size = 14) => {
         if (!provider) return <Bot size={size} color="var(--btn-primary)" />;
         if (provider.includes('gemini')) return <Sparkles size={size} color="#8A2BE2" />;
@@ -132,7 +132,6 @@ function LogTable({ refreshTrigger, selectedSessions }) {
             {(isAiLoading || aiResponse) && (
                 <div style={{ marginBottom: '20px', padding: '25px', backgroundColor: 'var(--bg-main)', borderLeft: '4px solid var(--btn-primary)', borderRadius: '0 8px 8px 0', border: '1px solid var(--border-color)' }}>
                     <h4 style={{ margin: '0 0 15px 0', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '16px' }}>
-                        {/* YENİ: Başlık yanındaki ikon artık dinamik! */}
                         {getProviderIcon(aiProvider, 18)} Yapay Zeka Hata Analizi
                     </h4>
                     {isAiLoading ? (
@@ -214,7 +213,8 @@ function LogTable({ refreshTrigger, selectedSessions }) {
                                     {getHighlightedText(log.message, keyword)}
                                 </td>
                                 <td style={{ padding: '12px 10px', textAlign: 'right' }}>
-                                    {(log.logLevel === 'ERROR' || (log.message && log.message.includes('ERROR'))) && (
+                                    {/* YENİ: Sadece logLevel'i ERROR olan kayıtlarda AI Açıkla butonu görünecek */}
+                                    {log.logLevel === 'ERROR' && (
                                         <motion.button
                                             whileHover={{ scale: 1.05 }}
                                             whileTap={{ scale: 0.95 }}
@@ -235,7 +235,6 @@ function LogTable({ refreshTrigger, selectedSessions }) {
                                             onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--btn-primary)'; e.currentTarget.style.color = 'white'; }}
                                             onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--btn-primary)'; }}
                                         >
-                                            {/* YENİ: Buton içindeki ikon artık dinamik! */}
                                             {getProviderIcon(aiProvider, 14)} AI Açıkla
                                         </motion.button>
                                     )}
